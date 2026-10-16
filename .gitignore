@@ -1,0 +1,3 @@
+sdks/
+*.o
+.DS_Store
