@@ -29,6 +29,10 @@ Vorbis, APE, and WavPack.
 
 Each list has a search box at the top. Pull the list down to see it.
 
+A tap on the bar above the tabs opens the player. The player has shuffle,
+repeat, the volume, AirPlay, and the queue. A long press on a track or an
+album gives Play Next and Add to Queue.
+
 The app reads the tags of the files. The art comes from the file, or from
 an image named `cover`, `folder`, `front`, or `albumart` in the folder.
 
@@ -78,3 +82,5 @@ Another app, or a shell on the phone with `uiopen`, controls the player:
     groovelet://seek?t=90
     groovelet://open?name=albums
     groovelet://open?name=album&path=Album/01%20Song.mp3
+    groovelet://open?name=player
+    groovelet://open?name=queue
