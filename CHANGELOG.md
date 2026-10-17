@@ -4,6 +4,7 @@
 
 - The checks of all features on the iPhone 4S with iOS 6.1.3.
 - The player screen has more room, and the volume has a margin.
+- The knob of the volume is on the centre of the line.
 - The ReplayGain factor of a track goes into the log.
 
 ## 0.7.0 (2026-10-17)
