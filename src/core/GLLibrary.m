@@ -305,6 +305,26 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
     });
 }
 
+- (NSArray *)removeFolder:(NSString *)folder {
+    if (!folder.length) return @[];
+    __block NSMutableArray *paths = [NSMutableArray array];
+    NSString *start = [folder stringByAppendingString:@"/"];
+    NSString *end = [folder stringByAppendingString:@"0"];  // The byte after "/".
+    dispatch_sync(self.queue, ^{
+        sqlite3_stmt *statement = [self prepare:@"SELECT path FROM tracks WHERE path >= ?1 AND path < ?2"];
+        GLBindText(statement, 1, start);
+        GLBindText(statement, 2, end);
+        while (statement && sqlite3_step(statement) == SQLITE_ROW) [paths addObject:GLColumnText(statement, 0)];
+        sqlite3_finalize(statement);
+        statement = [self prepare:@"DELETE FROM tracks WHERE path >= ?1 AND path < ?2"];
+        GLBindText(statement, 1, start);
+        GLBindText(statement, 2, end);
+        sqlite3_step(statement);
+        sqlite3_finalize(statement);
+    });
+    return paths;
+}
+
 #pragma mark For the screens
 
 - (NSUInteger)trackCount {

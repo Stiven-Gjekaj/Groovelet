@@ -71,6 +71,8 @@ typedef NS_ENUM(NSInteger, GLPlaylistKind) {
 // its ID, its play count, and its date of addition.
 - (void)saveTracks:(NSArray *)tracks;
 - (void)removePaths:(NSArray *)paths;
+// Removes the rows of all files in a folder. Returns their paths.
+- (NSArray *)removeFolder:(NSString *)folder;
 // Replaces the list of the M3U files in the music directory.
 - (void)setPlaylistFiles:(NSArray *)paths;
 

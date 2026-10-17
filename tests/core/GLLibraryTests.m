@@ -141,3 +141,12 @@ GL_TEST(test_library_opens_an_existing_database_again) {
     library = nil;
     GL_EQUAL_INT([[[GLLibrary alloc] initWithPath:path] trackCount], 1);
 }
+
+GL_TEST(test_library_removes_the_rows_of_a_folder) {
+    GLLibrary *library = GLNewLibrary();
+    [library saveTracks:@[ GLMakeTrack(@"Rock/1.mp3", @"1", @"B", @"X", 1), GLMakeTrack(@"Rock/A/2.mp3", @"2", @"B", @"X", 2),
+                           GLMakeTrack(@"Rocker/3.mp3", @"3", @"B", @"X", 3) ]];
+    NSArray *removed = [library removeFolder:@"Rock"];
+    GL_EQUAL([removed sortedArrayUsingSelector:@selector(compare:)], (@[ @"Rock/1.mp3", @"Rock/A/2.mp3" ]));
+    GL_EQUAL([[library allTracks] valueForKey:@"path"], (@[ @"Rocker/3.mp3" ]));
+}
