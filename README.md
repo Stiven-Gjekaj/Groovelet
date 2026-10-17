@@ -29,7 +29,10 @@ Vorbis, APE, and WavPack.
 
 - **Artists**, **Albums**, and **Songs** show the library. Albums is a grid
   of the art.
-- **Playlists** shows the playlists.
+- **Playlists** shows the automatic playlists (Recently Added, Most Played,
+  and Recently Played), the M3U files in the music directory, and the
+  playlists that you make. A long press on a song or an album gives Add to
+  Playlist.
 - **More** holds Folders, which shows the files as they are on disk, and
   Settings.
 
@@ -90,3 +93,4 @@ Another app, or a shell on the phone with `uiopen`, controls the player:
     groovelet://open?name=album&path=Album/01%20Song.mp3
     groovelet://open?name=player
     groovelet://open?name=queue
+    groovelet://open?name=playlist&path=Lists/Favourites.m3u8
