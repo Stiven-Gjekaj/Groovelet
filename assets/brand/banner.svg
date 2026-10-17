@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <!-- Groovelet GitHub social preview, 1280x640.
+       The content stays inside the middle area (x 198..1130, y 180..480),
+       because GitHub crops the edges in some places. -->
+  <defs>
+    <radialGradient id="bg" cx="640" cy="300" r="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#232323"/>
+      <stop offset="1" stop-color="#111111"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="640" fill="#111111"/>
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <g transform="translate(220.87 184) scale(0.86)">
+    <g transform="scale(0.39)">
+      <!-- The disc. A thin rim keeps the edge visible on a dark background. -->
+      <circle cx="256" cy="256" r="236" fill="#151515"/>
+      <circle cx="256" cy="256" r="234" fill="none" stroke="#3A3A3A" stroke-width="4"/>
+      <!-- The grooves. Three outer lines and two inner lines. -->
+      <circle cx="256" cy="256" r="192" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+      <circle cx="256" cy="256" r="206" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+      <circle cx="256" cy="256" r="220" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+      <circle cx="256" cy="256" r="96" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+      <circle cx="256" cy="256" r="110" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+      <!-- The coral groove. It reads as the G of Groovelet. -->
+      <path d="M368.21 154.96 A151 151 0 1 0 407 256 H300" fill="none" stroke="#FF6B4A" stroke-width="48" stroke-linecap="butt" stroke-linejoin="miter"/>
+      <!-- The spindle hole. -->
+      <circle cx="256" cy="256" r="18" fill="#F5F1EC"/>
+    </g>
+    <!-- The word Groovelet as geometric strokes. -->
+    <g transform="translate(236 149) scale(0.72)">
+      <path d="M116.08 -116.08 A68 68 0 1 0 136 -68 H70 M180 0 V-100 M180 -55 A45 45 0 0 1 225 -100 M264 -50 A50 50 0 1 1 364 -50 A50 50 0 1 1 264 -50 M396 -50 A50 50 0 1 1 496 -50 A50 50 0 1 1 396 -50 M534 -100 L579 0 L624 -100 M662 -50 H762 A50 50 0 1 0 750.3 -17.86 M800 0 V-136 M838 -50 H938 A50 50 0 1 0 926.3 -17.86 M994 -130 V-30 A30 30 0 0 0 1024 0 M976 -100 H1026" fill="none" stroke="#F5F1EC" stroke-width="22" stroke-linecap="butt" stroke-linejoin="miter"/>
+    </g>
+  </g>
+  <!-- The line under the logo, as geometric strokes. -->
+  <g transform="translate(257.2 470) scale(0.3)" opacity="0.8">
+    <path d="M0 0 L54 -136 L108 0 M22 -48 H86 M218 0 V-100 M218 -60 A40 40 0 0 1 298 -60 V0 M298 -60 A40 40 0 0 1 378 -60 V0 M422 -100 V-50 A50 50 0 0 0 522 -50 V-100 V0 M632.98 -91.07 A30 25 0 1 0 610 -50 A30 25 0 1 1 587.02 -8.93 M678 0 V-100 M801.36 -85.36 A50 50 0 1 0 801.36 -14.64 M912 40 V-100 M912 -50 A50 50 0 1 1 1012 -50 A50 50 0 1 1 912 -50 M1056 0 V-136 M1094 -50 A50 50 0 1 1 1194 -50 A50 50 0 1 1 1094 -50 M1194 -100 V0 M1232 -100 L1277 0 M1322 -100 L1259 40 M1360 -50 H1460 A50 50 0 1 0 1448.3 -17.86 M1498 0 V-100 M1498 -55 A45 45 0 0 1 1543 -100 M1674 0 V-106 A30 30 0 0 1 1704 -136 M1654 -100 H1704 M1742 -50 A50 50 0 1 1 1842 -50 A50 50 0 1 1 1742 -50 M1880 0 V-100 M1880 -55 A45 45 0 0 1 1925 -100 M2036 0 V-100 M2074 -68 A64 68 0 1 1 2202 -68 A64 68 0 1 1 2074 -68 M2315.58 -123.85 A36 34 0 1 0 2288 -68 A36 34 0 1 1 2260.42 -12.15 M2452 -50 A50 50 0 1 1 2552 -50 A50 50 0 1 1 2452 -50 M2452 -50 A82 88 0 0 1 2536 -136" fill="none" stroke="#F5F1EC" stroke-width="22" stroke-linecap="butt" stroke-linejoin="miter"/>
+    <circle cx="678" cy="-134" r="14" fill="#F5F1EC"/>
+    <circle cx="2036" cy="-134" r="14" fill="#F5F1EC"/>
+  </g>
+</svg>

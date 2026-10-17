@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Groovelet mark, draft C. A record half out of a coral sleeve.
+       The background is transparent. -->
+  <defs>
+    <clipPath id="disc">
+      <circle cx="318" cy="222" r="178"/>
+    </clipPath>
+  </defs>
+  <!-- The disc sits behind the sleeve. -->
+  <circle cx="318" cy="222" r="178" fill="#151515"/>
+  <circle cx="318" cy="222" r="176" fill="none" stroke="#3A3A3A" stroke-width="4"/>
+  <circle cx="318" cy="222" r="100" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="5"/>
+  <circle cx="318" cy="222" r="114" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="5"/>
+  <circle cx="318" cy="222" r="128" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="5"/>
+  <circle cx="318" cy="222" r="150" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="5"/>
+  <circle cx="318" cy="222" r="164" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="5"/>
+  <circle cx="318" cy="222" r="60" fill="#F5F1EC"/>
+  <circle cx="318" cy="222" r="12" fill="#151515"/>
+  <!-- A shadow of the sleeve on the disc. The clip keeps it on the disc. -->
+  <rect x="46" y="156" width="310" height="310" rx="22" fill="#000000" fill-opacity="0.40" clip-path="url(#disc)"/>
+  <!-- The sleeve. -->
+  <rect x="36" y="166" width="310" height="310" rx="22" fill="#FF6B4A"/>
+</svg>
