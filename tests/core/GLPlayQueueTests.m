@@ -45,3 +45,81 @@ GL_TEST(test_queue_comes_back_from_an_archive) {
     GL_EQUAL_INT(copy.index, 2);
     GL_EQUAL(copy.currentEntry.track.path, @"c.mp3");
 }
+
+static NSArray *GLTitles(NSArray *entries) {
+    NSMutableArray *titles = [NSMutableArray array];
+    for (GLQueueEntry *entry in entries) [titles addObject:entry.track.title];
+    return titles;
+}
+
+GL_TEST(test_queue_repeats_all_and_one) {
+    GLPlayQueue *queue = [GLPlayQueue new];
+    [queue setTracks:GLTracks(@[ @"a", @"b" ]) currentIndex:1];
+    GL_EXPECT(queue.entryAfterCurrent == nil);
+    queue.repeat = GLRepeatAll;
+    GL_EQUAL(queue.entryAfterCurrent.track.title, @"a");
+    queue.repeat = GLRepeatOne;
+    GL_EXPECT(queue.entryAfterCurrent == queue.currentEntry);
+    GL_EQUAL(queue.entryForNext.track.title, @"a");
+    [queue moveToEntry:queue.entries[0]];
+    GL_EQUAL(queue.entryBeforeCurrent.track.title, @"b");
+}
+
+GL_TEST(test_queue_shuffles_the_tracks_after_the_chosen_one) {
+    NSArray *names = @[ @"a", @"b", @"c", @"d", @"e", @"f", @"g", @"h" ];
+    GLPlayQueue *queue = [GLPlayQueue new];
+    queue.shuffle = YES;
+    [queue setTracks:GLTracks(names) currentIndex:3];
+    GL_EQUAL_INT(queue.index, 0);
+    GL_EQUAL(queue.currentEntry.track.title, @"d");
+    GL_EQUAL_INT([[NSSet setWithArray:GLTitles(queue.entries)] count], 8);
+    queue.shuffle = NO;
+    GL_EQUAL(GLTitles(queue.entries), names);
+    GL_EQUAL(queue.currentEntry.track.title, @"d");
+    GL_EQUAL_INT(queue.index, 3);
+}
+
+GL_TEST(test_queue_shuffle_keeps_the_played_entries_before_the_current_one) {
+    GLPlayQueue *queue = [GLPlayQueue new];
+    [queue setTracks:GLTracks(@[ @"a", @"b", @"c", @"d", @"e" ]) currentIndex:2];
+    queue.shuffle = YES;
+    GL_EQUAL([GLTitles(queue.entries) subarrayWithRange:NSMakeRange(0, 3)], (@[ @"a", @"b", @"c" ]));
+    GL_EQUAL_INT(queue.index, 2);
+}
+
+GL_TEST(test_queue_puts_tracks_next_and_at_the_end) {
+    GLPlayQueue *queue = [GLPlayQueue new];
+    [queue setTracks:GLTracks(@[ @"a", @"b", @"c" ]) currentIndex:0];
+    [queue insertNext:GLTracks(@[ @"x", @"y" ])];
+    [queue append:GLTracks(@[ @"z" ])];
+    GL_EQUAL(GLTitles(queue.entries), (@[ @"a", @"x", @"y", @"b", @"c", @"z" ]));
+    GL_EQUAL(queue.entryAfterCurrent.track.title, @"x");
+    GLPlayQueue *empty = [GLPlayQueue new];
+    [empty append:GLTracks(@[ @"q" ])];
+    GL_EQUAL(empty.currentEntry.track.title, @"q");
+}
+
+GL_TEST(test_queue_moves_and_removes_entries_and_keeps_the_current_one) {
+    GLPlayQueue *queue = [GLPlayQueue new];
+    [queue setTracks:GLTracks(@[ @"a", @"b", @"c", @"d" ]) currentIndex:1];
+    [queue moveEntryAtIndex:3 toIndex:0];
+    GL_EQUAL(GLTitles(queue.entries), (@[ @"d", @"a", @"b", @"c" ]));
+    GL_EQUAL(queue.currentEntry.track.title, @"b");
+    GL_EXPECT(![queue removeEntryAtIndex:2]);
+    GL_EXPECT([queue removeEntryAtIndex:0]);
+    GL_EQUAL(GLTitles(queue.entries), (@[ @"a", @"b", @"c" ]));
+    GL_EQUAL_INT(queue.index, 1);
+}
+
+GL_TEST(test_queue_keeps_shuffle_and_repeat_in_an_archive) {
+    GLPlayQueue *queue = [GLPlayQueue new];
+    queue.repeat = GLRepeatAll;
+    queue.shuffle = YES;
+    [queue setTracks:GLTracks(@[ @"a", @"b", @"c" ]) currentIndex:1];
+    GLPlayQueue *copy = [NSKeyedUnarchiver unarchiveObjectWithData:[NSKeyedArchiver archivedDataWithRootObject:queue]];
+    GL_EXPECT(copy.shuffle);
+    GL_EQUAL_INT(copy.repeat, GLRepeatAll);
+    copy.shuffle = NO;
+    GL_EQUAL(GLTitles(copy.entries), (@[ @"a", @"b", @"c" ]));
+    GL_EQUAL(copy.currentEntry.track.title, @"b");
+}
