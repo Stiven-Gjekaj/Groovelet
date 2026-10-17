@@ -147,10 +147,10 @@ typedef NS_ENUM(NSInteger, GLSettingsSection) {
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     if (indexPath.section == GLSectionLibrary && indexPath.row == 2) {
-        // A rescan also makes the art again, for art that changed.
+        // This scan reads each file again, and makes the art again.
         [[GLArtCache shared] clear];
         [[GLImageLoader shared] clear];
-        [[GLLibraryUpdater shared] scan];
+        [[GLLibraryUpdater shared] scanAllFiles];
     } else if (indexPath.section == GLSectionAbout && indexPath.row == 1) {
         [self.navigationController pushViewController:[[GLTextViewController alloc] initWithTitle:@"Licences"
                                                                                              text:[self licences]]
