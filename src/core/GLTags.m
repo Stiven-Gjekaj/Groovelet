@@ -660,6 +660,51 @@ static void GLReadID3v1(GLTagFile *file, GLTags *tags) {
     if (t[125] == 0 && t[126] != 0 && !tags.trackNumber) tags.trackNumber = t[126];
 }
 
+#pragma mark WAV and AIFF
+
+// Reads the chunks of a RIFF (WAV) or FORM (AIFF) file. Both can hold an
+// ID3v2 tag in an "id3 " chunk. WAV can hold a LIST INFO chunk, and AIFF can
+// hold NAME and AUTH chunks.
+static void GLReadChunks(GLTagFile *file, GLTags *tags, BOOL wantPicture, BOOL bigEndian) {
+    unsigned long long p = 12;
+    while (p + 8 <= file.size) {
+        NSData *header = [file read:p length:8];
+        if (!header) return;
+        const uint8_t *h = header.bytes;
+        uint32_t size = bigEndian ? GLBig32(h + 4) : GLLittle32(h + 4);
+        NSString *type = [[NSString alloc] initWithBytes:h length:4 encoding:NSISOLatin1StringEncoding].lowercaseString;
+        unsigned long long body = p + 8;
+        if ([type isEqualToString:@"id3 "]) {
+            GLReadID3v2(file, body, tags, wantPicture);
+        } else if ([type isEqualToString:@"list"] && size >= 4 && size < 1024 * 1024) {
+            NSData *list = [file read:body length:size];
+            const uint8_t *l = list.bytes;
+            if (list && memcmp(l, "INFO", 4) == 0) {
+                NSDictionary *names = @{ @"INAM": @"title", @"IART": @"artist", @"IPRD": @"album", @"ICRD": @"date",
+                                         @"IPRT": @"tracknumber", @"ITRK": @"tracknumber", @"IGNR": @"genre" };
+                NSUInteger q = 4;
+                while (q + 8 <= list.length) {
+                    uint32_t itemSize = GLLittle32(l + q + 4);
+                    if (itemSize > list.length - q - 8) break;
+                    NSString *key = [[NSString alloc] initWithBytes:l + q length:4 encoding:NSISOLatin1StringEncoding];
+                    NSUInteger n = 0;
+                    while (n < itemSize && l[q + 8 + n] != 0) n++;
+                    NSString *value = [[NSString alloc] initWithBytes:l + q + 8 length:n encoding:NSUTF8StringEncoding] ?:
+                        [[NSString alloc] initWithBytes:l + q + 8 length:n encoding:NSISOLatin1StringEncoding];
+                    if (names[key]) GLSetField(tags, names[key], value);
+                    q += 8 + itemSize + (itemSize & 1);
+                }
+            }
+        } else if (bigEndian && ([type isEqualToString:@"name"] || [type isEqualToString:@"auth"]) && size < 4096) {
+            NSData *text = [file read:body length:size];
+            NSString *value = [[NSString alloc] initWithData:text encoding:NSISOLatin1StringEncoding];
+            GLSetField(tags, [type isEqualToString:@"name"] ? @"title" : @"artist", value);
+        }
+        // Each chunk has an even length.
+        p = body + size + (size & 1);
+    }
+}
+
 #pragma mark The reader
 
 GLTags *GLReadTags(NSString *path, BOOL wantPicture) {
@@ -673,6 +718,14 @@ GLTags *GLReadTags(NSString *path, BOOL wantPicture) {
     }
     if (head && memcmp(head.bytes, "OggS", 4) == 0) {
         GLReadOgg(file, tags, wantPicture);
+        return tags;
+    }
+    if (head && memcmp(head.bytes, "RIFF", 4) == 0) {
+        GLReadChunks(file, tags, wantPicture, NO);
+        return tags;
+    }
+    if (head && memcmp(head.bytes, "FORM", 4) == 0) {
+        GLReadChunks(file, tags, wantPicture, YES);
         return tags;
     }
     // Some FLAC files start with an ID3v2 tag.

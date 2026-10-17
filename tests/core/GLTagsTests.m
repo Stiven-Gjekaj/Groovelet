@@ -233,3 +233,42 @@ GL_TEST(test_tags_read_apev2_before_id3v1) {
     GL_EXPECT(tags.album == nil);
     GL_EQUAL_INT(tags.trackNumber, 0);
 }
+
+static NSData *GLChunk(NSString *type, NSData *body, BOOL bigEndian) {
+    NSMutableData *chunk = [NSMutableData dataWithData:GLBytes(type)];
+    [chunk appendData:bigEndian ? GLBig32Data((uint32_t)body.length) : GLLittle32Data((uint32_t)body.length)];
+    [chunk appendData:body];
+    if (body.length & 1) [chunk increaseLengthBy:1];
+    return chunk;
+}
+
+GL_TEST(test_tags_read_the_info_list_of_a_wav_file) {
+    NSMutableData *info = [NSMutableData dataWithData:GLBytes(@"INFO")];
+    [info appendData:GLChunk(@"INAM", GLBytes(@"Wave song\0"), NO)];
+    [info appendData:GLChunk(@"IART", GLBytes(@"Wave band"), NO)];
+    [info appendData:GLChunk(@"IPRD", GLBytes(@"Wave album\0"), NO)];
+    NSMutableData *file = [NSMutableData dataWithData:GLBytes(@"RIFF")];
+    [file appendData:GLLittle32Data(0)];
+    [file appendData:GLBytes(@"WAVE")];
+    [file appendData:GLChunk(@"fmt ", [NSMutableData dataWithLength:16], NO)];
+    [file appendData:GLChunk(@"data", GLFakeAudio(1001), NO)];
+    [file appendData:GLChunk(@"LIST", info, NO)];
+    GLTags *tags = GLReadTags(GLWriteFile(@"a.wav", @[ file ]), NO);
+    GL_EQUAL(tags.title, @"Wave song");
+    GL_EQUAL(tags.artist, @"Wave band");
+    GL_EQUAL(tags.album, @"Wave album");
+}
+
+GL_TEST(test_tags_read_the_id3_chunk_of_an_aiff_file) {
+    NSData *id3 = GLID3Tag(@[ GLID3TextFrame(@"TIT2", @"AIFF song", 0, 3), GLID3TextFrame(@"TALB", @"AIFF album", 0, 3) ],
+                           3, 0);
+    NSMutableData *file = [NSMutableData dataWithData:GLBytes(@"FORM")];
+    [file appendData:GLBig32Data(0)];
+    [file appendData:GLBytes(@"AIFF")];
+    [file appendData:GLChunk(@"COMM", [NSMutableData dataWithLength:18], YES)];
+    [file appendData:GLChunk(@"SSND", GLFakeAudio(500), YES)];
+    [file appendData:GLChunk(@"ID3 ", id3, YES)];
+    GLTags *tags = GLReadTags(GLWriteFile(@"a.aiff", @[ file ]), NO);
+    GL_EQUAL(tags.title, @"AIFF song");
+    GL_EQUAL(tags.album, @"AIFF album");
+}
