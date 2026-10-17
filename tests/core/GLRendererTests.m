@@ -86,7 +86,7 @@ GL_TEST(test_renderer_starts_the_timeline_again_at_a_seek) {
     [renderer startItem:@"a" decoder:decoder atTime:0];
     int16_t buffer[4096 * 2];
     [renderer renderInto:buffer frames:4096];
-    [renderer startItem:@"a" decoder:decoder atTime:6];
+    GL_EXPECT([renderer restartAtTime:6]);
     GL_EQUAL_INT(decoder.position, GLOutputRate * 6);
     [renderer renderInto:buffer frames:4096];
     GLRendererPosition *position = [renderer positionAtFrame:GLOutputRate];
@@ -114,4 +114,18 @@ GL_TEST(test_renderer_forgets_the_next_track_when_it_is_removed) {
     GL_EXPECT(renderer.nextItem == nil);
     int16_t buffer[512 * 2];
     GL_EQUAL_INT([renderer renderInto:buffer frames:512], 100);
+}
+
+GL_TEST(test_renderer_keeps_the_next_track_at_a_seek) {
+    GLRenderer *renderer = [GLRenderer new];
+    [renderer startItem:@"a" decoder:[GLFakeDecoder decoderWithLength:GLOutputRate * 2 mark:1] atTime:0];
+    [renderer setNextItem:@"b" decoder:[GLFakeDecoder decoderWithLength:1000 mark:2]];
+    GL_EXPECT([renderer restartAtTime:1.5]);
+    GL_EQUAL(renderer.nextItem, @"b");
+    int16_t buffer[32768 * 2];
+    GL_EQUAL_INT([renderer renderInto:buffer frames:32768], GLOutputRate / 2 + 1000);
+}
+
+GL_TEST(test_renderer_cannot_restart_with_no_track) {
+    GL_EXPECT(![[GLRenderer new] restartAtTime:1]);
 }

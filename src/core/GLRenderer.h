@@ -20,8 +20,16 @@
 // the item. The next track stays. Call it to start, and after a seek.
 - (void)startItem:(id)item decoder:(id<GLDecoder>)decoder atTime:(double)seconds;
 
+// Starts the stream again from frame 0 at `seconds` into the current track.
+// The next track stays. Returns NO when no track is left.
+- (BOOL)restartAtTime:(double)seconds;
+
 // Sets the track that follows the current track. nil removes it.
 - (void)setNextItem:(id)item decoder:(id<GLDecoder>)decoder;
+
+// The track that the renderer reads now. It can be ahead of the track that
+// the output plays, by the length of the buffers of the output.
+@property (nonatomic, strong, readonly) id currentItem;
 
 // The item that follows the current track, or nil.
 @property (nonatomic, strong, readonly) id nextItem;

@@ -44,10 +44,23 @@
         self.currentItem = item;
         self.currentDecoder = decoder;
         if (seconds > 0) [decoder seekToTime:seconds];
-        [self.spans removeAllObjects];
-        self.renderedFrames = 0;
-        self.endFrame = -1;
-        [self addSpanForItem:item time:seconds];
+        [self resetTimelineAtTime:seconds];
+    }
+}
+
+- (void)resetTimelineAtTime:(double)seconds {
+    [self.spans removeAllObjects];
+    self.renderedFrames = 0;
+    self.endFrame = -1;
+    [self addSpanForItem:self.currentItem time:seconds];
+}
+
+- (BOOL)restartAtTime:(double)seconds {
+    @synchronized (self) {
+        if (!self.currentDecoder) return NO;
+        [self.currentDecoder seekToTime:seconds];
+        [self resetTimelineAtTime:seconds];
+        return YES;
     }
 }
 
