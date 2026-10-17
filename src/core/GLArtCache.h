@@ -29,6 +29,9 @@
 // The art at full size, as JPEG or PNG data, or nil. The lock screen shows it.
 - (NSData *)originalArtForAudioPath:(NSString *)path;
 
+// Removes the copies of the album `key`, of each size.
+- (void)removeKey:(NSString *)key;
+
 // Removes all copies.
 - (void)clear;
 

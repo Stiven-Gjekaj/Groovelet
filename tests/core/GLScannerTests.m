@@ -34,6 +34,8 @@ GL_TEST(test_scanner_adds_the_audio_files_with_their_tags) {
     GLScanResult *result = [GLNewScanner(library, music, NULL) scan];
     GL_EQUAL_INT(result.added, 2);
     GL_EQUAL_INT(result.total, 2);
+    // The two files are in two folders, so they make two albums.
+    GL_EQUAL_INT(result.changedAlbumKeys.count, 2);
     GLTrack *track = [library trackWithPath:@"Band/Album/01.mp3"];
     GL_EQUAL(track.title, @"First");
     GL_EXPECT(track.duration == 42);
@@ -69,5 +71,6 @@ GL_TEST(test_scanner_removes_the_rows_of_deleted_files) {
     [[NSFileManager defaultManager] removeItemAtPath:b error:NULL];
     GLScanResult *result = [GLNewScanner(library, music, NULL) scan];
     GL_EQUAL_INT(result.removed, 1);
+    GL_EQUAL_INT(result.changedAlbumKeys.count, 1);
     GL_EQUAL([[library allTracks] valueForKey:@"path"], (@[ @"a.mp3" ]));
 }

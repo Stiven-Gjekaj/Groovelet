@@ -12,6 +12,9 @@
 @property (nonatomic) NSUInteger removed;
 @property (nonatomic) NSUInteger total;
 @property (nonatomic) NSTimeInterval seconds;
+// The album keys of the files that the scan added, changed, or removed. The
+// art of these albums can be different now.
+@property (nonatomic, strong) NSSet *changedAlbumKeys;
 @end
 
 @interface GLScanner : NSObject

@@ -60,12 +60,17 @@ GL_TEST(test_art_cache_uses_the_cover_image_of_the_folder) {
 
 GL_TEST(test_art_cache_remembers_an_album_with_no_art) {
     NSString *song = GLWriteFile(@"c.mp3", @[ GLFakeAudio(100) ]);
-    GLArtCache *cache = [[GLArtCache alloc] initWithDirectory:GLTestTemporaryDirectory()];
+    NSString *directory = GLTestTemporaryDirectory();
+    GLArtCache *cache = [[GLArtCache alloc] initWithDirectory:directory];
     GL_EXPECT([cache thumbnailForKey:@"none" audioPath:song pixels:88] == nil);
     // Art that comes later does not show until the cache is cleared.
     [GLColorPNG(100, 100) writeToFile:[song.stringByDeletingLastPathComponent stringByAppendingPathComponent:@"cover.png"]
                            atomically:YES];
     GL_EXPECT([cache thumbnailForKey:@"none" audioPath:song pixels:88] == nil);
-    [cache clear];
+    [cache removeKey:@"other"];
+    GL_EXPECT([cache thumbnailForKey:@"none" audioPath:song pixels:88] == nil);
+    [cache removeKey:@"none"];
     GL_EXPECT([cache thumbnailForKey:@"none" audioPath:song pixels:88] != nil);
+    [cache clear];
+    GL_EQUAL_INT([[NSFileManager defaultManager] contentsOfDirectoryAtPath:directory error:NULL].count, 0);
 }

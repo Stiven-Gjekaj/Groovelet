@@ -44,6 +44,14 @@ static NSString *GLDigest(NSString *key) {
     return hex;
 }
 
+- (void)removeKey:(NSString *)key {
+    NSString *prefix = [GLDigest(key) stringByAppendingString:@"-"];
+    NSFileManager *files = [NSFileManager defaultManager];
+    for (NSString *name in [files contentsOfDirectoryAtPath:self.directory error:NULL]) {
+        if ([name hasPrefix:prefix]) [files removeItemAtPath:[self.directory stringByAppendingPathComponent:name] error:NULL];
+    }
+}
+
 #pragma mark The source
 
 // An image file in the folder of the audio file, or nil.

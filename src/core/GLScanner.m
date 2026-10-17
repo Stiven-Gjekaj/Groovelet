@@ -31,6 +31,7 @@
     GLScanResult *result = [GLScanResult new];
     NSMutableDictionary *stamps = [[self.library fileStamps] mutableCopy];
     NSMutableArray *batch = [NSMutableArray array];
+    NSMutableSet *changedAlbums = [NSMutableSet set];
     NSFileManager *files = [NSFileManager new];
     NSDirectoryEnumerator *walk = [files enumeratorAtURL:[NSURL fileURLWithPath:self.directory]
                               includingPropertiesForKeys:@[ NSURLFileSizeKey, NSURLContentModificationDateKey,
@@ -59,7 +60,13 @@
             track.modified = modified;
             track.duration = self.duration ? self.duration(full) : 0;
             [batch addObject:track];
-            if (known) result.changed++;
+            [changedAlbums addObject:track.albumKey];
+            if (known) {
+                // The file can have moved to another album. Its old album changed too.
+                NSString *old = [self.library trackWithPath:path].albumKey;
+                if (old) [changedAlbums addObject:old];
+                result.changed++;
+            }
             else result.added++;
             // Write in batches, so that a long scan shows its first results.
             if (batch.count >= 200) {
@@ -71,7 +78,12 @@
     }
     [self.library saveTracks:batch];
     // The rows that no file matched are gone.
+    for (NSString *path in stamps) {
+        NSString *old = [self.library trackWithPath:path].albumKey;
+        if (old) [changedAlbums addObject:old];
+    }
     [self.library removePaths:stamps.allKeys];
+    result.changedAlbumKeys = changedAlbums;
     result.removed = stamps.count;
     result.seconds = -[start timeIntervalSinceNow];
     if (result.added || result.changed || result.removed) [self.library postChange];
