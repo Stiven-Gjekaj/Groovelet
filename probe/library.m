@@ -2,6 +2,7 @@
 // database of the app. Usage: library [PATH_OF_DATABASE]
 
 #import "GLLibrary.h"
+#import "GLPlayQueue.h"
 
 static double GLTime(void (^block)(void)) {
     NSDate *start = [NSDate date];
@@ -23,6 +24,21 @@ int main(int argc, char **argv) {
         printf("albums: %.3f s (%lu)\n", GLTime(^{ count = [library albumsOfArtist:nil].count; }), (unsigned long)count);
         printf("fileStamps: %.3f s\n", GLTime(^{ count = [library fileStamps].count; }));
         printf("folder: %.3f s\n", GLTime(^{ count = [library contentOfFolder:@""].folders.count; }));
+        // The save and the restore of a queue of all tracks.
+        NSArray *tracks = [library allTracks];
+        GLPlayQueue *queue = [GLPlayQueue new];
+        printf("queue of all: %.3f s\n", GLTime(^{ [queue setTracks:tracks currentIndex:5]; }));
+        __block NSData *data = nil;
+        printf("queue save: %.3f s\n", GLTime(^{
+            data = [NSPropertyListSerialization dataWithPropertyList:queue.state format:NSPropertyListBinaryFormat_v1_0
+                                                             options:0 error:NULL];
+        }));
+        printf("queue restore: %.3f s (%lu bytes)\n", GLTime(^{
+            NSDictionary *state = [NSPropertyListSerialization propertyListWithData:data options:0 format:NULL error:NULL];
+            NSMutableDictionary *map = [NSMutableDictionary dictionary];
+            for (GLTrack *track in [library allTracks]) map[track.path] = track;
+            count = [GLPlayQueue queueWithState:state lookup:^GLTrack *(NSString *path) { return map[path]; }].entries.count;
+        }), (unsigned long)data.length);
     }
     return 0;
 }
