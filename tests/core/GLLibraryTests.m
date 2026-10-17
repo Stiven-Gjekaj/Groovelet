@@ -123,6 +123,17 @@ GL_TEST(test_library_removes_paths) {
     GL_EQUAL([[library allTracks] valueForKey:@"path"], (@[ @"2.mp3" ]));
 }
 
+GL_TEST(test_library_gives_all_tracks_by_title_with_their_sort_keys) {
+    GLLibrary *library = GLNewLibrary();
+    [library saveTracks:@[ GLMakeTrack(@"1.mp3", @"The Zoo", @"B", @"X", 1), GLMakeTrack(@"2.mp3", @"Moon", @"B", @"X", 2) ]];
+    NSArray *tracks = [library allTracks];
+    GL_EQUAL([tracks valueForKey:@"title"], (@[ @"Moon", @"The Zoo" ]));
+    GL_EQUAL([tracks[1] sortKey], @"zoo");
+    GL_EQUAL([tracks[1] displayAlbum], @"X");
+    library.ignoreArticles = NO;
+    GL_EQUAL([[library allTracks][1] sortKey], @"the zoo");
+}
+
 GL_TEST(test_library_opens_an_existing_database_again) {
     NSString *path = [GLTestTemporaryDirectory() stringByAppendingPathComponent:@"l.sqlite"];
     GLLibrary *library = [[GLLibrary alloc] initWithPath:path];

@@ -59,6 +59,9 @@ extern NSString *const GLLibraryDidChangeNotification;
 #pragma mark For the screens
 
 - (NSUInteger)trackCount;
+// All tracks, by title. To load fast, each track has only the facts that a
+// list shows: the ID, the path, the names, the duration, the picture flag,
+// and the sort key. trackWithPath: gives all facts.
 - (NSArray *)allTracks;
 - (NSArray *)artists;
 // The albums of the album artist `name`, by year. With nil, all albums by name.

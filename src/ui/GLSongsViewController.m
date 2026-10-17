@@ -3,8 +3,6 @@
 #import "GLImageLoader.h"
 #import "GLLibrary.h"
 #import "GLPlayback.h"
-#import "GLSettings.h"
-#import "GLSort.h"
 
 @implementation GLSongsViewController
 
@@ -21,7 +19,7 @@
 }
 
 - (NSString *)sortKeyForItem:(GLTrack *)track {
-    return GLSortKey(track.sortTitle ?: track.title, [GLSettings shared].ignoreArticles);
+    return track.sortKey ?: @"";
 }
 
 - (NSString *)searchTextForItem:(GLTrack *)track {

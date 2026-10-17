@@ -39,6 +39,9 @@ extern NSString *const GLUnknownArtist;
 @property (nonatomic) double added;      // Seconds since 1970
 @property (nonatomic) NSInteger playCount;
 @property (nonatomic) double lastPlayed;  // Seconds since 1970, or 0
+// The key that the list of songs sorts by. The library sets it. It is not
+// kept in an archive.
+@property (nonatomic, copy) NSString *sortKey;
 
 // A track with only a path. The title is the file name with no extension.
 + (instancetype)trackWithPath:(NSString *)path;
