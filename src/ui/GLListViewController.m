@@ -2,6 +2,7 @@
 #import "GLLibrary.h"
 #import "GLLog.h"
 #import "GLPlayback.h"
+#import "GLPlaylistPicker.h"
 #import "GLSort.h"
 #import "GLTheme.h"
 
@@ -176,7 +177,8 @@
     self.menuTracks = tracks;
     NSString *title = [item isKindOfClass:[GLTrack class]] ? [item title] : [item valueForKey:@"title"];
     UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:nil
-                                         destructiveButtonTitle:nil otherButtonTitles:@"Play Next", @"Add to Queue", nil];
+                                         destructiveButtonTitle:nil otherButtonTitles:@"Play Next", @"Add to Queue",
+                                                                @"Add to Playlist", nil];
     sheet.cancelButtonIndex = [sheet addButtonWithTitle:@"Cancel"];
     [sheet showFromTabBar:self.tabBarController.tabBar];
 }
@@ -184,6 +186,7 @@
 - (void)actionSheet:(UIActionSheet *)sheet clickedButtonAtIndex:(NSInteger)index {
     if (index == 0) [[GLPlayback shared] playNext:self.menuTracks];
     if (index == 1) [[GLPlayback shared] addToQueue:self.menuTracks];
+    if (index == 2) [GLPlaylistPicker addTracks:self.menuTracks fromView:self.tabBarController.view];
     self.menuTracks = nil;
 }
 
