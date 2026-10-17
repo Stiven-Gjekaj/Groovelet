@@ -14,3 +14,7 @@ NSString *GLWriteSineFile(NSString *directory, NSString *name, AudioFileTypeID t
 // It stops after one hour of sound, for a decoder that never ends.
 @protocol GLDecoder;
 NSUInteger GLCountFrames(id<GLDecoder> decoder);
+
+// The path of a file that scripts/fixtures.sh made. scripts/test.sh copies
+// the files next to the test program.
+NSString *GLFixturePath(NSString *name);

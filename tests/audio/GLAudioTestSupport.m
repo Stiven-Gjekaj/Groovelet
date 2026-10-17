@@ -65,3 +65,8 @@ NSUInteger GLCountFrames(id<GLDecoder> decoder) {
     }
     return total;
 }
+
+NSString *GLFixturePath(NSString *name) {
+    NSString *here = [[NSFileManager defaultManager] currentDirectoryPath];
+    return [[here stringByAppendingPathComponent:@"fixtures"] stringByAppendingPathComponent:name];
+}
