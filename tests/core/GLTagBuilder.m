@@ -134,3 +134,101 @@ NSData *GLMP4File(NSArray *items) {
     [file appendData:GLMP4Atom(@"mdat", @[ GLFakeAudio(2000) ])];
     return file;
 }
+
+NSData *GLVorbisCommentBody(NSArray *comments) {
+    NSData *vendor = GLBytes(@"test vendor");
+    NSMutableData *body = [NSMutableData dataWithData:GLLittle32Data((uint32_t)vendor.length)];
+    [body appendData:vendor];
+    [body appendData:GLLittle32Data((uint32_t)comments.count)];
+    for (NSString *comment in comments) {
+        NSData *bytes = GLBytes(comment);
+        [body appendData:GLLittle32Data((uint32_t)bytes.length)];
+        [body appendData:bytes];
+    }
+    return body;
+}
+
+NSData *GLFLACPictureBody(uint32_t type, NSData *picture) {
+    NSMutableData *body = [NSMutableData dataWithData:GLBig32Data(type)];
+    NSData *mime = GLBytes(@"image/png");
+    [body appendData:GLBig32Data((uint32_t)mime.length)];
+    [body appendData:mime];
+    [body appendData:GLBig32Data(0)];  // No description.
+    [body increaseLengthBy:16];         // Width, height, depth, colors.
+    [body appendData:GLBig32Data((uint32_t)picture.length)];
+    [body appendData:picture];
+    return body;
+}
+
+NSData *GLFLACFile(NSArray *blocks) {
+    NSMutableData *file = [NSMutableData dataWithData:GLBytes(@"fLaC")];
+    NSMutableArray *all = [NSMutableArray arrayWithObject:@[ @0, [NSMutableData dataWithLength:34] ]];
+    [all addObjectsFromArray:blocks];
+    for (NSUInteger i = 0; i < all.count; i++) {
+        uint8_t type = [all[i][0] unsignedCharValue];
+        NSData *body = all[i][1];
+        uint8_t header[4] = { (uint8_t)(type | (i + 1 == all.count ? 0x80 : 0)), (uint8_t)(body.length >> 16),
+                              (uint8_t)(body.length >> 8), (uint8_t)body.length };
+        [file appendBytes:header length:4];
+        [file appendData:body];
+    }
+    [file appendData:GLFakeAudio(500)];
+    return file;
+}
+
+NSData *GLOggFile(NSArray *packets) {
+    NSMutableData *file = [NSMutableData data];
+    uint32_t sequence = 0;
+    for (NSData *packet in packets) {
+        NSUInteger offset = 0;
+        BOOL continued = NO;
+        // Up to 255 segments of 255 bytes go in one page. The last segment of
+        // a packet has less than 255 bytes, also 0 bytes.
+        while (YES) {
+            NSUInteger left = packet.length - offset;
+            NSMutableData *table = [NSMutableData data];
+            NSUInteger inPage = 0;
+            BOOL ends = NO;
+            while (table.length < 255) {
+                uint8_t lace = (uint8_t)MIN((NSUInteger)255, left - inPage);
+                [table appendBytes:&lace length:1];
+                inPage += lace;
+                if (lace < 255) {
+                    ends = YES;
+                    break;
+                }
+            }
+            NSMutableData *page = [NSMutableData dataWithData:GLBytes(@"OggS")];
+            uint8_t head[2] = { 0, (uint8_t)(continued ? 1 : 0) };
+            [page appendBytes:head length:2];
+            [page increaseLengthBy:8];                // The granule position.
+            [page appendData:GLLittle32Data(77)];     // The serial number.
+            [page appendData:GLLittle32Data(sequence++)];
+            [page increaseLengthBy:4];                // The CRC.
+            uint8_t count = (uint8_t)table.length;
+            [page appendBytes:&count length:1];
+            [page appendData:table];
+            [page appendData:[packet subdataWithRange:NSMakeRange(offset, inPage)]];
+            [file appendData:page];
+            offset += inPage;
+            continued = YES;
+            if (ends) break;
+        }
+    }
+    return file;
+}
+
+NSString *GLBase64Encode(NSData *data) {
+    const char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const uint8_t *b = data.bytes;
+    NSMutableString *text = [NSMutableString string];
+    for (NSUInteger i = 0; i < data.length; i += 3) {
+        uint32_t bits = (uint32_t)b[i] << 16;
+        if (i + 1 < data.length) bits |= (uint32_t)b[i + 1] << 8;
+        if (i + 2 < data.length) bits |= b[i + 2];
+        [text appendFormat:@"%c%c%c%c", alphabet[(bits >> 18) & 63], alphabet[(bits >> 12) & 63],
+                           i + 1 < data.length ? alphabet[(bits >> 6) & 63] : '=',
+                           i + 2 < data.length ? alphabet[bits & 63] : '='];
+    }
+    return text;
+}

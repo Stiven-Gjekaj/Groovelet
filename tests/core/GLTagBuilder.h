@@ -37,3 +37,16 @@ NSData *GLMP4TextItem(NSString *type, NSString *text);
 NSData *GLMP4FreeformItem(NSString *name, NSString *text);
 // A whole M4A file with the items in moov/udta/meta/ilst.
 NSData *GLMP4File(NSArray *items);
+
+// The body of Vorbis comments, for FLAC and Ogg.
+NSData *GLVorbisCommentBody(NSArray *comments);
+// A FLAC picture block body.
+NSData *GLFLACPictureBody(uint32_t type, NSData *picture);
+// A FLAC file with a STREAMINFO block and the other blocks, each given as
+// @[ @(type), body ].
+NSData *GLFLACFile(NSArray *blocks);
+// An Ogg file with the packets of one stream. Each packet goes in its own
+// pages. The pages have no CRC, because the reader does not check it.
+NSData *GLOggFile(NSArray *packets);
+// Base64 with padding, as the comment METADATA_BLOCK_PICTURE holds it.
+NSString *GLBase64Encode(NSData *data);

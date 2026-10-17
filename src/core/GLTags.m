@@ -410,6 +410,180 @@ static void GLReadMP4(GLTagFile *file, GLTags *tags, BOOL wantPicture) {
     });
 }
 
+#pragma mark Vorbis comments
+
+static uint32_t GLLittle32(const uint8_t *p) {
+    return (uint32_t)p[3] << 24 | (uint32_t)p[2] << 16 | (uint32_t)p[1] << 8 | p[0];
+}
+
+// Reads a FLAC picture block: type, MIME, description, size, and data.
+static NSData *GLFLACPicture(NSData *block, uint32_t *typeOut) {
+    const uint8_t *b = block.bytes;
+    NSUInteger length = block.length, p = 0;
+    if (length < 32) return nil;
+    uint32_t type = GLBig32(b);
+    p = 4;
+    uint32_t mime = GLBig32(b + p);
+    p += 4 + mime;
+    if (p + 4 > length) return nil;
+    uint32_t description = GLBig32(b + p);
+    p += 4 + description + 16;
+    if (p + 4 > length) return nil;
+    uint32_t size = GLBig32(b + p);
+    p += 4;
+    if (size > length - p) return nil;
+    if (typeOut) *typeOut = type;
+    return [block subdataWithRange:NSMakeRange(p, size)];
+}
+
+// Decodes base64. The method of NSData for this is new in iOS 7, and the
+// old method is deprecated on the Mac. Characters outside the alphabet are
+// skipped.
+static NSData *GLBase64Decode(NSString *text) {
+    static int8_t table[256];
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        memset(table, -1, sizeof(table));
+        const char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        for (int i = 0; i < 64; i++) table[(uint8_t)alphabet[i]] = (int8_t)i;
+    });
+    NSData *input = [text dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
+    const uint8_t *in = input.bytes;
+    NSMutableData *out = [NSMutableData dataWithCapacity:input.length * 3 / 4];
+    uint32_t bits = 0;
+    int count = 0;
+    for (NSUInteger i = 0; i < input.length; i++) {
+        int8_t value = table[in[i]];
+        if (value < 0) continue;
+        bits = bits << 6 | (uint32_t)value;
+        if (++count == 4) {
+            uint8_t bytes[3] = { (uint8_t)(bits >> 16), (uint8_t)(bits >> 8), (uint8_t)bits };
+            [out appendBytes:bytes length:3];
+            bits = 0;
+            count = 0;
+        }
+    }
+    if (count == 2) {
+        uint8_t byte = (uint8_t)(bits >> 4);
+        [out appendBytes:&byte length:1];
+    } else if (count == 3) {
+        uint8_t bytes[2] = { (uint8_t)(bits >> 10), (uint8_t)(bits >> 2) };
+        [out appendBytes:bytes length:2];
+    }
+    return out;
+}
+
+static void GLVorbisComments(GLTags *tags, NSData *data, BOOL wantPicture) {
+    const uint8_t *b = data.bytes;
+    NSUInteger length = data.length;
+    if (length < 8) return;
+    NSUInteger p = 4 + GLLittle32(b);
+    if (p + 4 > length) return;
+    uint32_t count = GLLittle32(b + p);
+    p += 4;
+    for (uint32_t i = 0; i < count && p + 4 <= length; i++) {
+        uint32_t size = GLLittle32(b + p);
+        p += 4;
+        if (size > length - p) return;
+        NSString *comment = [[NSString alloc] initWithBytes:b + p length:size encoding:NSUTF8StringEncoding];
+        p += size;
+        NSRange equals = [comment rangeOfString:@"="];
+        if (equals.location == NSNotFound) continue;
+        NSString *key = [comment substringToIndex:equals.location].lowercaseString;
+        NSString *value = [comment substringFromIndex:equals.location + 1];
+        if ([key isEqualToString:@"metadata_block_picture"] || [key isEqualToString:@"coverart"]) {
+            tags.hasPicture = YES;
+            if (!wantPicture) continue;
+            NSData *decoded = GLBase64Decode(value);
+            uint32_t type = 3;
+            NSData *picture = [key isEqualToString:@"coverart"] ? decoded : GLFLACPicture(decoded, &type);
+            if (picture && (!tags.picture || type == 3)) tags.picture = picture;
+            continue;
+        }
+        if ([key isEqualToString:@"tracktotal"] || [key isEqualToString:@"totaltracks"]) continue;
+        GLSetField(tags, key, value);
+    }
+}
+
+static void GLReadFLAC(GLTagFile *file, unsigned long long start, GLTags *tags, BOOL wantPicture) {
+    unsigned long long p = start + 4;
+    while (p + 4 <= file.size) {
+        NSData *header = [file read:p length:4];
+        if (!header) return;
+        const uint8_t *h = header.bytes;
+        BOOL last = (h[0] & 0x80) != 0;
+        uint8_t type = h[0] & 0x7f;
+        uint32_t length = GLBig24(h + 1);
+        p += 4;
+        if (type == 4) {
+            NSData *block = [file read:p length:length];
+            if (block) GLVorbisComments(tags, block, wantPicture);
+        } else if (type == 6) {
+            tags.hasPicture = YES;
+            if (wantPicture) {
+                NSData *block = [file read:p length:length];
+                uint32_t pictureType = 0;
+                NSData *picture = block ? GLFLACPicture(block, &pictureType) : nil;
+                if (picture && (!tags.picture || pictureType == 3)) tags.picture = picture;
+            }
+        }
+        p += length;
+        if (last) return;
+    }
+}
+
+// Reads the second packet of the first stream of an Ogg file. It holds the
+// comments of Vorbis and Opus. The reader stops after 16 MB.
+static NSData *GLOggCommentPacket(GLTagFile *file) {
+    NSMutableData *packet = [NSMutableData data];
+    unsigned long long p = 0;
+    int packetIndex = 0;
+    uint32_t serial = 0;
+    BOOL first = YES;
+    while (p + 27 <= file.size && packet.length < 16 * 1024 * 1024) {
+        NSData *header = [file read:p length:27];
+        const uint8_t *h = header.bytes;
+        if (!header || memcmp(h, "OggS", 4) != 0) return nil;
+        uint32_t pageSerial = GLLittle32(h + 14);
+        if (first) serial = pageSerial;
+        first = NO;
+        uint8_t segments = h[26];
+        NSData *table = [file read:p + 27 length:segments];
+        if (!table) return nil;
+        const uint8_t *t = table.bytes;
+        unsigned long long data = p + 27 + segments;
+        unsigned long long size = 0;
+        for (int i = 0; i < segments; i++) size += t[i];
+        if (pageSerial == serial) {
+            unsigned long long offset = data;
+            for (int i = 0; i < segments; i++) {
+                if (packetIndex == 1 && t[i] > 0) {
+                    NSData *piece = [file read:offset length:t[i]];
+                    if (!piece) return nil;
+                    [packet appendData:piece];
+                }
+                offset += t[i];
+                // A segment of less than 255 bytes ends a packet.
+                if (t[i] < 255) {
+                    if (packetIndex == 1) return packet;
+                    packetIndex++;
+                }
+            }
+        }
+        p = data + size;
+    }
+    return nil;
+}
+
+static void GLReadOgg(GLTagFile *file, GLTags *tags, BOOL wantPicture) {
+    NSData *packet = GLOggCommentPacket(file);
+    if (packet.length > 8 && memcmp(packet.bytes, "OpusTags", 8) == 0) {
+        GLVorbisComments(tags, [packet subdataWithRange:NSMakeRange(8, packet.length - 8)], wantPicture);
+    } else if (packet.length > 7 && memcmp(packet.bytes, "\x03vorbis", 7) == 0) {
+        GLVorbisComments(tags, [packet subdataWithRange:NSMakeRange(7, packet.length - 7)], wantPicture);
+    }
+}
+
 #pragma mark The reader
 
 GLTags *GLReadTags(NSString *path, BOOL wantPicture) {
@@ -421,6 +595,13 @@ GLTags *GLReadTags(NSString *path, BOOL wantPicture) {
         GLReadMP4(file, tags, wantPicture);
         return tags;
     }
-    GLReadID3v2(file, 0, tags, wantPicture);
+    if (head && memcmp(head.bytes, "OggS", 4) == 0) {
+        GLReadOgg(file, tags, wantPicture);
+        return tags;
+    }
+    // Some FLAC files start with an ID3v2 tag.
+    unsigned long long id3 = GLReadID3v2(file, 0, tags, wantPicture);
+    NSData *flac = [file read:id3 length:4];
+    if (flac && memcmp(flac.bytes, "fLaC", 4) == 0) GLReadFLAC(file, id3, tags, wantPicture);
     return tags;
 }

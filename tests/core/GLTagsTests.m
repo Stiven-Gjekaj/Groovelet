@@ -127,3 +127,66 @@ GL_TEST(test_tags_read_the_cover_of_an_m4a_file_only_when_asked) {
     GL_EXPECT(quick.picture == nil);
     GL_EQUAL(GLReadTags(path, YES).picture, cover);
 }
+
+GL_TEST(test_tags_read_the_vorbis_comments_and_the_picture_of_flac) {
+    NSData *cover = GLFakeAudio(700);
+    NSData *comments = GLVorbisCommentBody(@[
+        @"TITLE=Ballad", @"Artist=Quartet", @"ALBUM=Live", @"ALBUMARTIST=Quartet & Friends", @"TRACKNUMBER=04",
+        @"DISCNUMBER=1/2", @"DATE=1977", @"REPLAYGAIN_ALBUM_GAIN=-3.10 dB", @"broken comment",
+    ]);
+    NSString *path = GLWriteFile(@"a.flac", @[ GLFLACFile(@[ @[ @4, comments ], @[ @6, GLFLACPictureBody(3, cover) ] ]) ]);
+    GLTags *tags = GLReadTags(path, YES);
+    GL_EQUAL(tags.title, @"Ballad");
+    GL_EQUAL(tags.artist, @"Quartet");
+    GL_EQUAL(tags.albumArtist, @"Quartet & Friends");
+    GL_EQUAL_INT(tags.trackNumber, 4);
+    GL_EQUAL_INT(tags.discNumber, 1);
+    GL_EQUAL_INT(tags.year, 1977);
+    GL_EXPECT(fabs(tags.albumGain + 3.1) < 1e-9);
+    GL_EXPECT(tags.hasPicture);
+    GL_EQUAL(tags.picture, cover);
+    GL_EXPECT(GLReadTags(path, NO).picture == nil);
+}
+
+GL_TEST(test_tags_read_flac_after_an_id3_tag) {
+    NSData *id3 = GLID3Tag(@[ GLID3TextFrame(@"TIT2", @"From ID3", 0, 3) ], 3, 0);
+    NSData *flac = GLFLACFile(@[ @[ @4, GLVorbisCommentBody(@[ @"TITLE=From FLAC", @"ALBUM=Only in FLAC" ]) ] ]);
+    GLTags *tags = GLReadTags(GLWriteFile(@"a.flac", @[ id3, flac ]), NO);
+    GL_EQUAL(tags.title, @"From ID3");
+    GL_EQUAL(tags.album, @"Only in FLAC");
+}
+
+GL_TEST(test_tags_read_the_comments_of_opus) {
+    NSMutableData *head = [NSMutableData dataWithData:GLBytes(@"OpusHead")];
+    [head increaseLengthBy:11];
+    NSMutableData *comments = [NSMutableData dataWithData:GLBytes(@"OpusTags")];
+    [comments appendData:GLVorbisCommentBody(@[ @"TITLE=Opus song", @"ARTIST=Opus band" ])];
+    GLTags *tags = GLReadTags(GLWriteFile(@"a.opus", @[ GLOggFile(@[ head, comments, GLFakeAudio(300) ]) ]), NO);
+    GL_EQUAL(tags.title, @"Opus song");
+    GL_EQUAL(tags.artist, @"Opus band");
+}
+
+GL_TEST(test_tags_read_vorbis_comments_that_cross_pages) {
+    NSMutableData *head = [NSMutableData dataWithData:GLBytes(@"\x01vorbis")];
+    [head increaseLengthBy:23];
+    // A long comment makes a packet of more than one page of 65025 bytes.
+    NSString *longText = [@"" stringByPaddingToLength:70000 withString:@"x" startingAtIndex:0];
+    NSMutableData *comments = [NSMutableData dataWithData:GLBytes(@"\x03vorbis")];
+    [comments appendData:GLVorbisCommentBody(@[ [@"COMMENT=" stringByAppendingString:longText], @"TITLE=Long" ])];
+    uint8_t framing = 1;
+    [comments appendBytes:&framing length:1];
+    GLTags *tags = GLReadTags(GLWriteFile(@"a.ogg", @[ GLOggFile(@[ head, comments ]) ]), NO);
+    GL_EQUAL(tags.title, @"Long");
+}
+
+GL_TEST(test_tags_read_a_picture_in_vorbis_comments) {
+    NSData *cover = GLFakeAudio(400);
+    NSString *encoded = GLBase64Encode(GLFLACPictureBody(3, cover));
+    NSMutableData *head = [NSMutableData dataWithData:GLBytes(@"OpusHead")];
+    [head increaseLengthBy:11];
+    NSMutableData *comments = [NSMutableData dataWithData:GLBytes(@"OpusTags")];
+    [comments appendData:GLVorbisCommentBody(@[ [@"METADATA_BLOCK_PICTURE=" stringByAppendingString:encoded] ])];
+    GLTags *tags = GLReadTags(GLWriteFile(@"a.opus", @[ GLOggFile(@[ head, comments ]) ]), YES);
+    GL_EXPECT(tags.hasPicture);
+    GL_EQUAL(tags.picture, cover);
+}
