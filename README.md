@@ -19,6 +19,19 @@ Vorbis, APE, and WavPack.
   `/Applications`.
 - **Over SSH:** `scp -r Album iphone4s:/var/mobile/Media/Groovelet/`
 
+## Screens
+
+- **Artists**, **Albums**, and **Songs** show the library. Albums is a grid
+  of the art.
+- **Playlists** shows the playlists.
+- **More** holds Folders, which shows the files as they are on disk, and
+  Settings.
+
+Each list has a search box at the top. Pull the list down to see it.
+
+The app reads the tags of the files. The art comes from the file, or from
+an image named `cover`, `folder`, `front`, or `albumart` in the folder.
+
 ## Build
 
 1. Download `iPhoneOS9.3.sdk.tar.xz` from the releases of
@@ -49,6 +62,7 @@ and links without ARC.
 | `scripts/icons.sh` | Renders the icon and the launch images. |
 | `scripts/ffmpeg.sh` | Builds the audio decoders of FFmpeg for the phone. `scripts/app.sh` runs it when necessary. |
 | `scripts/fixtures.sh` | Makes the sound files of the FFmpeg tests. |
+| `scripts/bigsamples.py` | Makes a library of many short files, to measure the speed. |
 
 The phone is at `iphone4s` over a USB iproxy tunnel on port 2222.
 
@@ -62,3 +76,5 @@ Another app, or a shell on the phone with `uiopen`, controls the player:
     groovelet://next
     groovelet://previous
     groovelet://seek?t=90
+    groovelet://open?name=albums
+    groovelet://open?name=album&path=Album/01%20Song.mp3
