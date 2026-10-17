@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0 (2026-10-17)
+
+- The checks of all features on the iPhone 4S with iOS 6.1.3.
+- The player screen has more room, and the volume has a margin.
+- The ReplayGain factor of a track goes into the log.
+
 ## 0.7.0 (2026-10-17)
 
 - ReplayGain from the tags, for each track or each album, in Settings.
