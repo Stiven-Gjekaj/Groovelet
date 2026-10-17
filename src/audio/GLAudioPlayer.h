@@ -29,10 +29,11 @@
 @property (nonatomic) float volume;
 
 // Starts `item` at `seconds`. With `paused`, it gets ready and waits for
-// resume. Returns NO if the file does not open.
-- (BOOL)playItem:(id)item path:(NSString *)path atTime:(double)seconds paused:(BOOL)paused;
+// resume. `gain` multiplies the samples, for ReplayGain. Returns NO if the
+// file does not open.
+- (BOOL)playItem:(id)item path:(NSString *)path gain:(double)gain atTime:(double)seconds paused:(BOOL)paused;
 // Sets the track that follows the current one. nil removes it.
-- (void)setNextItem:(id)item path:(NSString *)path;
+- (void)setNextItem:(id)item path:(NSString *)path gain:(double)gain;
 - (void)pause;
 - (void)resume;
 - (void)seekToTime:(double)seconds;

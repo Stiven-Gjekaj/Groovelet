@@ -3,6 +3,7 @@
 #include <AudioToolbox/AudioToolbox.h>
 #import "GLDecoders.h"
 #import "GLRenderer.h"
+#import "GLReplayGain.h"
 
 // 4 buffers of 8192 frames hold 0.74 seconds of sound. A larger buffer
 // wakes the CPU less often. A seek fills them again at once.
@@ -19,6 +20,7 @@ enum { GLBufferCount = 4, GLBufferFrames = 8192 };
 @property (nonatomic) double duration;
 @property (nonatomic, strong) NSMapTable *durations;
 @property (nonatomic, strong) NSMapTable *paths;
+@property (nonatomic, strong) NSMapTable *gains;
 @property (nonatomic) BOOL interrupted;
 @property (nonatomic) NSUInteger nextToken;
 // The start frame of the play that the clock last saw.
@@ -47,6 +49,7 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
         _openQueue = dispatch_queue_create("GLAudioPlayer.open", DISPATCH_QUEUE_SERIAL);
         _durations = [NSMapTable strongToStrongObjectsMapTable];
         _paths = [NSMapTable strongToStrongObjectsMapTable];
+        _gains = [NSMapTable strongToStrongObjectsMapTable];
         _idleBuffers = [NSMutableArray array];
         _volume = 1;
         AVAudioSession *session = [AVAudioSession sharedInstance];
@@ -145,13 +148,20 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
 
 #pragma mark Play
 
-- (BOOL)playItem:(id)item path:(NSString *)path atTime:(double)seconds paused:(BOOL)paused {
-    id<GLDecoder> decoder = GLOpenDecoder(path, NULL);
+// Opens the decoder of a file, with the gain of the item.
+static id<GLDecoder> GLOpenWithGain(NSString *path, double gain) {
+    return [GLGainDecoder decoderWithDecoder:GLOpenDecoder(path, NULL) factor:gain];
+}
+
+- (BOOL)playItem:(id)item path:(NSString *)path gain:(double)gain atTime:(double)seconds paused:(BOOL)paused {
+    id<GLDecoder> decoder = GLOpenWithGain(path, gain);
     if (!decoder) return NO;
     [self.durations removeAllObjects];
     [self.paths removeAllObjects];
+    [self.gains removeAllObjects];
     [self.durations setObject:@(decoder.duration) forKey:item];
     [self.paths setObject:path forKey:item];
+    [self.gains setObject:@(gain) forKey:item];
     self.nextToken++;
     [self.renderer setNextItem:nil decoder:nil];
     [self.renderer startItem:item decoder:decoder atTime:seconds];
@@ -175,17 +185,18 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
     self.playing = AudioQueueStart(self.queue, NULL) == noErr;
 }
 
-- (void)setNextItem:(id)item path:(NSString *)path {
+- (void)setNextItem:(id)item path:(NSString *)path gain:(double)gain {
     NSUInteger token = ++self.nextToken;
     [self.renderer setNextItem:nil decoder:nil];
     if (!item) return;
     // Open the file away from the main thread. A newer call wins.
     dispatch_async(self.openQueue, ^{
-        id<GLDecoder> decoder = GLOpenDecoder(path, NULL);
+        id<GLDecoder> decoder = GLOpenWithGain(path, gain);
         dispatch_async(dispatch_get_main_queue(), ^{
             if (token != self.nextToken || !decoder) return;
             [self.durations setObject:@(decoder.duration) forKey:item];
             [self.paths setObject:path forKey:item];
+            [self.gains setObject:@(gain) forKey:item];
             [self.renderer setNextItem:item decoder:decoder];
             if (self.queue) [self refillIdleBuffers];
         });
@@ -215,10 +226,14 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
     if (reading != self.currentItem) {
         // The renderer reads the next track already. Open the current track
         // again, and make the track that the renderer read the next one.
-        id<GLDecoder> decoder = GLOpenDecoder([self.paths objectForKey:self.currentItem], NULL);
+        id<GLDecoder> decoder = GLOpenWithGain([self.paths objectForKey:self.currentItem],
+                                               [[self.gains objectForKey:self.currentItem] doubleValue]);
         if (!decoder) return;
         [self.renderer startItem:self.currentItem decoder:decoder atTime:seconds];
-        if (reading) [self setNextItem:reading path:[self.paths objectForKey:reading]];
+        if (reading) {
+            [self setNextItem:reading path:[self.paths objectForKey:reading]
+                         gain:[[self.gains objectForKey:reading] doubleValue]];
+        }
     } else if (![self.renderer restartAtTime:seconds]) {
         return;
     }

@@ -43,11 +43,11 @@ GL_TEST(test_player_plays_the_next_item_and_then_finishes) {
     GLPlayerRecorder *recorder = [GLPlayerRecorder new];
     __weak GLAudioPlayer *weakPlayer = player;
     recorder.onStart = ^(id item) {
-        if ([item isEqual:@"a"]) [weakPlayer setNextItem:@"b" path:paths[@"b"]];
+        if ([item isEqual:@"a"]) [weakPlayer setNextItem:@"b" path:paths[@"b"] gain:1];
     };
     player.delegate = recorder;
     NSDate *start = [NSDate date];
-    GL_EXPECT([player playItem:@"a" path:paths[@"a"] atTime:0 paused:NO]);
+    GL_EXPECT([player playItem:@"a" path:paths[@"a"] gain:1 atTime:0 paused:NO]);
     GL_EXPECT(player.playing);
     while (!recorder.finished && [start timeIntervalSinceNow] > -5) {
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.05]];
@@ -65,7 +65,7 @@ GL_TEST(test_player_seeks_near_the_end) {
     player.volume = 0;
     GLPlayerRecorder *recorder = [GLPlayerRecorder new];
     player.delegate = recorder;
-    GL_EXPECT([player playItem:@"a" path:path atTime:0 paused:NO]);
+    GL_EXPECT([player playItem:@"a" path:path gain:1 atTime:0 paused:NO]);
     [player seekToTime:3.5];
     NSDate *start = [NSDate date];
     while (!recorder.finished && [start timeIntervalSinceNow] > -5) {
@@ -79,7 +79,7 @@ GL_TEST(test_player_keeps_its_place_while_paused) {
     NSString *path = GLWave(GLTestTemporaryDirectory(), @"a.wav", 4);
     GLAudioPlayer *player = [GLAudioPlayer new];
     player.volume = 0;
-    GL_EXPECT([player playItem:@"a" path:path atTime:1 paused:NO]);
+    GL_EXPECT([player playItem:@"a" path:path gain:1 atTime:1 paused:NO]);
     NSDate *until = [NSDate dateWithTimeIntervalSinceNow:0.6];
     while ([until timeIntervalSinceNow] > 0) {
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.05]];
@@ -104,10 +104,10 @@ GL_TEST(test_player_starts_an_item_again_for_repeat_one) {
     __weak GLAudioPlayer *weakPlayer = player;
     __block int plays = 0;
     recorder.onStart = ^(id item) {
-        if (++plays < 3) [weakPlayer setNextItem:item path:path];
+        if (++plays < 3) [weakPlayer setNextItem:item path:path gain:1];
     };
     player.delegate = recorder;
-    GL_EXPECT([player playItem:@"a" path:path atTime:0 paused:NO]);
+    GL_EXPECT([player playItem:@"a" path:path gain:1 atTime:0 paused:NO]);
     NSDate *start = [NSDate date];
     while (!recorder.finished && [start timeIntervalSinceNow] > -5) {
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.05]];
