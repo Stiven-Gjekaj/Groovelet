@@ -26,7 +26,7 @@ for each choice is in [docs/decisions.md](docs/decisions.md).
 - Keep the index in SQLite, and scan in the background.
 - Add the five tabs, the dark theme, and the Inter font.
 
-## 0.4: the player
+## 0.4: the player (done, 2026-10-17)
 
 - Add the mini player and the now-playing screen.
 - Add the queue, shuffle, and repeat.
