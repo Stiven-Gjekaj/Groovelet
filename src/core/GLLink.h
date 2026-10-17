@@ -2,6 +2,8 @@
 //   groovelet://play?path=PATH&t=SECONDS  plays the folder of PATH from PATH
 //   groovelet://pause, groovelet://resume, groovelet://next, groovelet://previous
 //   groovelet://seek?t=SECONDS             seeks in the current track
+//   groovelet://sleep?t=SECONDS            stops the play after SECONDS, or 0 for off
+//   groovelet://sleep?name=end             stops the play at the end of the track
 //   groovelet://open?name=NAME             opens a screen: a tab, "folders", "upload",
 //                                          "settings", "player", or "queue"
 //   groovelet://open?name=album&path=PATH  opens the album of the track PATH
@@ -18,6 +20,7 @@ typedef NS_ENUM(NSInteger, GLLinkKind) {
     GLLinkPrevious,
     GLLinkSeek,
     GLLinkOpen,
+    GLLinkSleep,
 };
 
 @interface GLLink : NSObject

@@ -18,6 +18,9 @@ GL_TEST(test_link_reads_the_commands) {
     GL_EQUAL_INT(seek.kind, GLLinkSeek);
     GL_EXPECT(seek.time == 30);
     GL_EQUAL(GLParseLink([NSURL URLWithString:@"groovelet://open?name=albums"]).name, @"albums");
+    GLLink *sleep = GLParseLink([NSURL URLWithString:@"groovelet://sleep?t=90"]);
+    GL_EQUAL_INT(sleep.kind, GLLinkSleep);
+    GL_EXPECT(sleep.time == 90);
 }
 
 GL_TEST(test_link_refuses_an_unknown_or_incomplete_link) {

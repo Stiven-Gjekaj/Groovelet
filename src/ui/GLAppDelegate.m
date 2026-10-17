@@ -89,6 +89,10 @@
         case GLLinkPrevious: [playback previous]; break;
         case GLLinkSeek: [playback seekToTime:link.time]; break;
         case GLLinkOpen: [self openScreen:link.name path:link.path]; break;
+        case GLLinkSleep:
+            if ([link.name isEqualToString:@"end"]) [playback sleepAtEndOfCurrentTrack];
+            else [playback sleepAfterSeconds:link.time];
+            break;
     }
     return YES;
 }

@@ -22,6 +22,7 @@ GLLink *GLParseLink(NSURL *url) {
     NSDictionary *kinds = @{
         @"play": @(GLLinkPlay), @"pause": @(GLLinkPause), @"resume": @(GLLinkResume), @"next": @(GLLinkNext),
         @"previous": @(GLLinkPrevious), @"seek": @(GLLinkSeek), @"open": @(GLLinkOpen),
+        @"sleep": @(GLLinkSleep),
     };
     NSNumber *kind = kinds[url.host.lowercaseString ?: @""];
     if (!kind) return nil;
