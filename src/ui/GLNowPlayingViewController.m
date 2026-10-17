@@ -65,7 +65,9 @@
     [self buttonWithIcon:GLIconQueue size:24 frame:CGRectMake(272, 2, 44, 44) action:@selector(showQueue)];
 
     self.art = [CALayer layer];
-    self.art.frame = CGRectMake(40, 50, 240, 240);
+    // The screen is 460 points high. The art is 200 points, so that the rows
+    // below it have room, and the volume has a margin at the bottom.
+    self.art.frame = CGRectMake(60, 48, 200, 200);
     self.art.contentsGravity = kCAGravityResizeAspectFill;
     self.art.masksToBounds = YES;
     self.art.cornerRadius = 6;
@@ -78,14 +80,14 @@
     shadow.shadowOpacity = 0.6;
     shadow.shadowRadius = 12;
     shadow.shadowOffset = CGSizeMake(0, 6);
-    shadow.shadowPath = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, 240, 240) cornerRadius:6].CGPath;
+    shadow.shadowPath = [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, 200, 200) cornerRadius:6].CGPath;
     [self.view.layer addSublayer:shadow];
     [self.view.layer addSublayer:self.art];
 
-    self.titleLabel = [self labelWithFrame:CGRectMake(20, 300, 280, 24) font:GLBoldFont(18) color:GLTextColor()];
-    self.artistLabel = [self labelWithFrame:CGRectMake(20, 324, 280, 20) font:GLFont(14) color:GLAccentColor()];
+    self.titleLabel = [self labelWithFrame:CGRectMake(20, 262, 280, 24) font:GLBoldFont(18) color:GLTextColor()];
+    self.artistLabel = [self labelWithFrame:CGRectMake(20, 286, 280, 20) font:GLFont(14) color:GLAccentColor()];
 
-    self.scrubber = [[UISlider alloc] initWithFrame:CGRectMake(20, 348, 280, 24)];
+    self.scrubber = [[UISlider alloc] initWithFrame:CGRectMake(20, 314, 280, 24)];
     [self.scrubber setThumbImage:GLThumbImage(12, GLTextColor()) forState:UIControlStateNormal];
     [self.scrubber setThumbImage:GLThumbImage(16, GLTextColor()) forState:UIControlStateHighlighted];
     [self.scrubber setMinimumTrackImage:GLBarImage(GLAccentColor()) forState:UIControlStateNormal];
@@ -95,13 +97,13 @@
     [self.scrubber addTarget:self action:@selector(scrubEnded)
             forControlEvents:UIControlEventTouchUpInside | UIControlEventTouchUpOutside | UIControlEventTouchCancel];
     [self.view addSubview:self.scrubber];
-    self.elapsedLabel = [self labelWithFrame:CGRectMake(20, 370, 80, 14) font:GLFont(11) color:GLSecondaryTextColor()];
+    self.elapsedLabel = [self labelWithFrame:CGRectMake(20, 338, 80, 14) font:GLFont(11) color:GLSecondaryTextColor()];
     self.elapsedLabel.textAlignment = NSTextAlignmentLeft;
-    self.remainingLabel = [self labelWithFrame:CGRectMake(220, 370, 80, 14) font:GLFont(11)
+    self.remainingLabel = [self labelWithFrame:CGRectMake(220, 338, 80, 14) font:GLFont(11)
                                          color:GLSecondaryTextColor()];
     self.remainingLabel.textAlignment = NSTextAlignmentRight;
 
-    CGFloat row = 386;
+    CGFloat row = 360;
     self.shuffleButton = [self buttonWithIcon:GLIconShuffle size:20 frame:CGRectMake(14, row + 4, 44, 44)
                                        action:@selector(toggleShuffle)];
     [self buttonWithIcon:GLIconPrevious size:28 frame:CGRectMake(72, row, 52, 52) action:@selector(previous)];
@@ -111,7 +113,7 @@
     self.repeatButton = [self buttonWithIcon:GLIconRepeat size:20 frame:CGRectMake(262, row + 4, 44, 44)
                                       action:@selector(cycleRepeat)];
 
-    MPVolumeView *volume = [[MPVolumeView alloc] initWithFrame:CGRectMake(20, 440, 280, 20)];
+    MPVolumeView *volume = [[MPVolumeView alloc] initWithFrame:CGRectMake(24, 420, 272, 23)];
     [volume setMinimumVolumeSliderImage:GLBarImage(GLTextColor()) forState:UIControlStateNormal];
     [volume setMaximumVolumeSliderImage:GLBarImage([UIColor colorWithWhite:1 alpha:0.25]) forState:UIControlStateNormal];
     [volume setVolumeThumbImage:GLThumbImage(12, GLTextColor()) forState:UIControlStateNormal];
@@ -190,7 +192,8 @@
         long minutes = lround(ceil([playback.sleepDate timeIntervalSinceNow] / 60));
         self.headingLabel.text = [NSString stringWithFormat:@"SLEEP IN %ld MIN", MAX(1L, minutes)];
     } else {
-        self.headingLabel.text = @"NOW PLAYING";
+        // The bar stays empty, so that the screen shows less text.
+        self.headingLabel.text = nil;
     }
     if (self.scrubbing) return;
     double duration = playback.duration;
