@@ -20,7 +20,7 @@ for each choice is in [docs/decisions.md](docs/decisions.md).
 - Play FLAC, Opus, Vorbis, APE, and WavPack in the same engine.
 - Resample hi-res files to the rate of the output.
 
-## 0.3: the library
+## 0.3: the library (done, 2026-10-17)
 
 - Read the tags and the art.
 - Keep the index in SQLite, and scan in the background.
