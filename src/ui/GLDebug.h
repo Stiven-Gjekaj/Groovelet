@@ -5,6 +5,7 @@
 //   groovelet://debug?action=deletefolder&path=DIR  deletes a folder as the menu does
 //   groovelet://debug?action=playlist&name=NAME&path=PATH  adds a track to a new playlist
 //   groovelet://debug?action=scroll&t=SECONDS       scrolls the visible list and logs the frames
+//   groovelet://debug?action=scanall                reads each file of the library again
 
 #import <UIKit/UIKit.h>
 

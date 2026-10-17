@@ -4,6 +4,7 @@
 
 #import "GLFoldersViewController.h"
 #import "GLLibrary.h"
+#import "GLLibraryUpdater.h"
 #import "GLListViewController.h"
 #import "GLLog.h"
 
@@ -98,6 +99,8 @@ BOOL GLHandleDebugLink(NSURL *url, UIViewController *root) {
         GLPlaylist *playlist = [[GLLibrary shared] createPlaylistNamed:values[@"name"]];
         GLTrack *track = [[GLLibrary shared] trackWithPath:values[@"path"]];
         if (track) [[GLLibrary shared] addTracks:@[ track ] toPlaylist:playlist];
+    } else if ([action isEqualToString:@"scanall"]) {
+        [[GLLibraryUpdater shared] scanAllFiles];
     } else if ([action isEqualToString:@"scroll"]) {
         UIScrollView *view = nil;
         if ([visible isKindOfClass:[UITableViewController class]]) view = ((UITableViewController *)visible).tableView;
