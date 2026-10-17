@@ -47,6 +47,11 @@ make "Formats/Vorbis.ogg" 15 450 "Vorbis" "Format Band" "Formats" 7 -c:a vorbis 
 make "Formats/WavPack.wv" 15 470 "WavPack" "Format Band" "Formats" 8 -c:a wavpack
 make "Formats/HiRes.flac" 15 490 "Hi-Res" "Format Band" "Formats" 9 -c:a flac -ar 96000 -sample_fmt s32
 
+# A loud track with ReplayGain tags: -9 dB for the track, -6 dB for the album.
+make "Formats/Loud.mp3" 15 300 "Loud" "Format Band" "Formats" 10 -c:a libmp3lame -b:a 192k \
+    -metadata REPLAYGAIN_TRACK_GAIN="-9.00 dB" -metadata REPLAYGAIN_TRACK_PEAK="0.99" \
+    -metadata REPLAYGAIN_ALBUM_GAIN="-6.00 dB" -metadata REPLAYGAIN_ALBUM_PEAK="0.99"
+
 # One sweep cut into two files. With gapless play, the sweep has no break.
 $F -f lavfi -i "aevalsrc=sin(2*PI*(200+40*t)*t):s=44100:d=20" -ac 2 "$OUT/Gapless/sweep.wav"
 $F -i "$OUT/Gapless/sweep.wav" -t 10 -metadata title="Sweep 1" -metadata artist="Gapless" \

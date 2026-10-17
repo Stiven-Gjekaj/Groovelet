@@ -187,7 +187,9 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
     GLReplayGainMode mode = [GLSettings shared].replayGainMode;
     if (!entry || mode == GLReplayGainOff) return 1;
     GLTrack *full = [[GLLibrary shared] trackWithPath:entry.track.path];
-    return GLReplayGainFactor(full ?: entry.track, mode);
+    double factor = GLReplayGainFactor(full ?: entry.track, mode);
+    if (factor != 1) GLLog(@"gain %.3f for %@", factor, entry.track.path);
+    return factor;
 }
 
 // Starts the current entry. A file that does not open is skipped.
