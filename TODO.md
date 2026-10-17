@@ -3,7 +3,7 @@
 Each release adds one big part. The risky audio work comes first. The reason
 for each choice is in [docs/decisions.md](docs/decisions.md).
 
-## 0.1: the audio engine
+## 0.1: the audio engine (done, 2026-10-17)
 
 - Copy the newer `build.sh` and `fix-sdk.sh` from ZettaLite.
 - Copy the scripts, the packaging, and the test runner, with the prefix `GL`.
@@ -11,7 +11,7 @@ for each choice is in [docs/decisions.md](docs/decisions.md).
 - Play the sound through one audio output.
 - Go from one file to the next with no gap.
 - Show the track on the lock screen, and obey the remote controls.
-- Show a plain list of the files in Documents.
+- Show a plain list of the files in the music directory.
 
 ## 0.2: more formats
 
