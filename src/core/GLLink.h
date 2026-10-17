@@ -2,7 +2,8 @@
 //   groovelet://play?path=PATH&t=SECONDS  plays the folder of PATH from PATH
 //   groovelet://pause, groovelet://resume, groovelet://next, groovelet://previous
 //   groovelet://seek?t=SECONDS             seeks in the current track
-//   groovelet://open?name=NAME             opens a screen, for example a tab
+//   groovelet://open?name=NAME             opens a screen: a tab, "folders", or "settings"
+//   groovelet://open?name=album&path=PATH  opens the album of the track PATH
 // PATH is relative to the music directory. Each value is percent-encoded.
 
 #import <Foundation/Foundation.h>
