@@ -39,8 +39,12 @@ Vorbis, APE, and WavPack.
 Each list has a search box at the top. Pull the list down to see it.
 
 A tap on the bar above the tabs opens the player. The player has shuffle,
-repeat, the volume, AirPlay, and the queue. A long press on a track or an
-album gives Play Next and Add to Queue.
+repeat, the volume, AirPlay, the queue, and the sleep timer. A long press on
+a track, an album, or a folder gives Play Next, Add to Queue, Add to
+Playlist, and Delete from the Phone.
+
+Settings has ReplayGain (off, track, or album), the sort without "The", and
+a new scan of the library.
 
 The app reads the tags of the files. The art comes from the file, or from
 an image named `cover`, `folder`, `front`, or `albumart` in the folder.
@@ -68,7 +72,7 @@ and links without ARC.
 | Script | What it does |
 | --- | --- |
 | `scripts/app.sh` | Builds `build/Groovelet.app`. |
-| `scripts/install.sh` | Builds the app, copies it to the phone, and opens it. |
+| `scripts/install.sh` | Builds the app, copies it to the phone, and opens it. With `--debug`, the app has the debug links of `src/ui/GLDebug.h`. |
 | `scripts/deb.sh` | Builds the Cydia package in `build/`. |
 | `scripts/test.sh` | Runs the tests on the Mac. With `--phone`, it also runs the audio tests on the phone. |
 | `scripts/samples.sh` | Makes sample music in each format and copies it to the phone. |
@@ -89,6 +93,8 @@ Another app, or a shell on the phone with `uiopen`, controls the player:
     groovelet://next
     groovelet://previous
     groovelet://seek?t=90
+    groovelet://sleep?t=1800
+    groovelet://sleep?name=end
     groovelet://open?name=albums
     groovelet://open?name=album&path=Album/01%20Song.mp3
     groovelet://open?name=player
