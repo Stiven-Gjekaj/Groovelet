@@ -89,3 +89,17 @@ GL_TEST(test_scanner_gives_the_playlist_files_to_the_library) {
                                                                                                        GLPlaylistFile]];
     GL_EQUAL([files valueForKey:@"path"], (@[ @"list.m3u" ]));
 }
+
+GL_TEST(test_scanner_reads_all_files_again_when_asked) {
+    NSString *music = GLTestTemporaryDirectory();
+    GLWriteSong(music, @"a.mp3", @"A");
+    GLWriteSong(music, @"b.mp3", @"B");
+    GLLibrary *library = [[GLLibrary alloc] initWithPath:[GLTestTemporaryDirectory() stringByAppendingPathComponent:@"l"]];
+    [GLNewScanner(library, music, NULL) scan];
+    NSUInteger probes = 0;
+    GLScanner *scanner = GLNewScanner(library, music, &probes);
+    scanner.readAll = YES;
+    GLScanResult *result = [scanner scan];
+    GL_EQUAL_INT(probes, 2);
+    GL_EQUAL_INT(result.changed, 2);
+}

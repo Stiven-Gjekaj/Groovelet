@@ -60,7 +60,10 @@
             result.total++;
             NSArray *known = stamps[path];
             [stamps removeObjectForKey:path];
-            if (known && [known[0] longLongValue] == size.longLongValue && [known[1] doubleValue] == modified) continue;
+            if (!self.readAll && known && [known[0] longLongValue] == size.longLongValue &&
+                [known[1] doubleValue] == modified) {
+                continue;
+            }
             GLTrack *track = [GLTrack trackWithPath:path tags:GLReadTags(full, NO)];
             track.fileSize = size.longLongValue;
             track.modified = modified;

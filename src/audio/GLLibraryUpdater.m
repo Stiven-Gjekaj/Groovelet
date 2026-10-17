@@ -10,6 +10,7 @@ NSString *const GLScanDidEndNotification = @"GLScanDidEnd";
 @interface GLLibraryUpdater ()
 @property (nonatomic) BOOL scanning;
 @property (nonatomic) BOOL again;
+@property (nonatomic) BOOL readAll;
 @property (nonatomic, strong) GLScanResult *lastResult;
 @property (nonatomic, strong) dispatch_queue_t queue;
 @end
@@ -31,17 +32,25 @@ NSString *const GLScanDidEndNotification = @"GLScanDidEnd";
     return self;
 }
 
+- (void)scanAllFiles {
+    self.readAll = YES;
+    [self scan];
+}
+
 - (void)scan {
     if (self.scanning) {
         self.again = YES;
         return;
     }
     self.scanning = YES;
+    BOOL readAll = self.readAll;
+    self.readAll = NO;
     [[NSNotificationCenter defaultCenter] postNotificationName:GLScanDidStartNotification object:self];
     dispatch_async(self.queue, ^{
         GLScanner *scanner = [[GLScanner alloc] initWithLibrary:[GLLibrary shared] directory:GLMusicDirectory()
             isAudio:^BOOL(NSString *path) { return GLIsAudioPath(path); }
             duration:^double(NSString *path) { return GLOpenDecoder(path, NULL).duration; }];
+        scanner.readAll = readAll;
         scanner.isPlaylist = ^BOOL(NSString *path) {
             NSString *extension = path.pathExtension.lowercaseString;
             return [extension isEqualToString:@"m3u"] || [extension isEqualToString:@"m3u8"];

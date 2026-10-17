@@ -18,5 +18,7 @@ extern NSString *const GLScanDidEndNotification;
 @property (nonatomic, strong, readonly) GLScanResult *lastResult;
 
 - (void)scan;
+// Reads each file again, also when it did not change.
+- (void)scanAllFiles;
 
 @end

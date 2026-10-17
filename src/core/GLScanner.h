@@ -30,6 +30,10 @@
 // nil keeps the list of playlists as it is.
 @property (nonatomic, copy) BOOL (^isPlaylist)(NSString *path);
 
+// With YES, the scan reads each file again, also when its size and its time
+// did not change. A new version of the app can read more from a file.
+@property (nonatomic) BOOL readAll;
+
 // Runs the scan on the calling thread, and posts the change of the library
 // when a row changed.
 - (GLScanResult *)scan;
