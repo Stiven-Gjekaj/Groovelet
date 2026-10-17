@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 (2026-10-17)
+
+- Make playlists in the app. Add tracks or albums from the menu of a long
+  press, change the order, remove tracks, rename, and delete.
+- M3U and M3U8 files in the music directory show as playlists.
+- The automatic playlists Recently Added, Most Played, and Recently Played.
+- The app counts the plays of each track.
+
 ## 0.5.0 (2026-10-17)
 
 - Upload over Wi-Fi: More, Upload shows an address. A browser on the same
