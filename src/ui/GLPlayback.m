@@ -146,6 +146,20 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
     if ([self.queue removeEntryAtIndex:index]) [self queueDidChange];
 }
 
+- (void)forgetPaths:(NSArray *)paths {
+    if (!paths.count) return;
+    BOOL currentGone = [self.queue removeEntriesWithPaths:[NSSet setWithArray:paths]];
+    self.queueChanged = YES;
+    if (currentGone) {
+        [self.player stop];
+        if (self.queue.currentEntry) [self startCurrentAtTime:0 paused:YES];
+    } else {
+        [self prepareNext];
+    }
+    [self changed];
+    [self save];
+}
+
 - (void)playEntryAtIndex:(NSUInteger)index {
     if (index >= self.queue.entries.count) return;
     [self countCurrentIfMostlyPlayed];

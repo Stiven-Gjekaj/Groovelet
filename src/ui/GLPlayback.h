@@ -31,6 +31,9 @@ extern NSString *const GLPlaybackDidChangeNotification;
 // Changes the queue. The current entry stays.
 - (void)moveEntryAtIndex:(NSUInteger)from toIndex:(NSUInteger)to;
 - (void)removeEntryAtIndex:(NSUInteger)index;
+// Takes the deleted tracks out of the queue. When the current track goes, the
+// player stops and waits at the next track.
+- (void)forgetPaths:(NSArray *)paths;
 // Plays the entry at `index` of the queue.
 - (void)playEntryAtIndex:(NSUInteger)index;
 
