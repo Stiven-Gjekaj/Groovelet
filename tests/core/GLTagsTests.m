@@ -91,3 +91,39 @@ GL_TEST(test_tags_stop_at_a_frame_that_is_longer_than_the_tag) {
     GL_EQUAL(tags.title, @"Fine");
     GL_EXPECT(tags.album == nil);
 }
+
+GL_TEST(test_tags_read_the_items_of_an_m4a_file) {
+    uint8_t track[8] = { 0, 0, 0, 7, 0, 12, 0, 0 };
+    uint8_t disc[6] = { 0, 0, 0, 1, 0, 2 };
+    uint8_t yes = 1;
+    NSData *file = GLMP4File(@[
+        GLMP4TextItem(@"©nam", @"Song"), GLMP4TextItem(@"©ART", @"Singer"),
+        GLMP4TextItem(@"©alb", @"Record"), GLMP4TextItem(@"aART", @"Band"),
+        GLMP4TextItem(@"©day", @"2011-02-03T08:00:00Z"), GLMP4TextItem(@"soaa", @"Band, The"),
+        GLMP4Item(@"trkn", 0, [NSData dataWithBytes:track length:8]),
+        GLMP4Item(@"disk", 0, [NSData dataWithBytes:disc length:6]),
+        GLMP4Item(@"cpil", 21, [NSData dataWithBytes:&yes length:1]),
+        GLMP4FreeformItem(@"replaygain_track_gain", @"+1.50 dB"),
+    ]);
+    GLTags *tags = GLReadTags(GLWriteFile(@"a.m4a", @[ file ]), NO);
+    GL_EQUAL(tags.title, @"Song");
+    GL_EQUAL(tags.artist, @"Singer");
+    GL_EQUAL(tags.album, @"Record");
+    GL_EQUAL(tags.albumArtist, @"Band");
+    GL_EQUAL(tags.sortAlbumArtist, @"Band, The");
+    GL_EQUAL_INT(tags.year, 2011);
+    GL_EQUAL_INT(tags.trackNumber, 7);
+    GL_EQUAL_INT(tags.discNumber, 1);
+    GL_EXPECT(tags.compilation);
+    GL_EXPECT(fabs(tags.trackGain - 1.5) < 1e-9);
+}
+
+GL_TEST(test_tags_read_the_cover_of_an_m4a_file_only_when_asked) {
+    NSData *cover = GLFakeAudio(3000);
+    NSString *path = GLWriteFile(@"a.m4a", @[ GLMP4File(@[ GLMP4Item(@"covr", 13, cover),
+                                                           GLMP4TextItem(@"©nam", @"Song") ]) ]);
+    GLTags *quick = GLReadTags(path, NO);
+    GL_EXPECT(quick.hasPicture);
+    GL_EXPECT(quick.picture == nil);
+    GL_EQUAL(GLReadTags(path, YES).picture, cover);
+}

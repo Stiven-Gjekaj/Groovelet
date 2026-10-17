@@ -297,12 +297,130 @@ static unsigned long long GLReadID3v2(GLTagFile *file, unsigned long long offset
     return total;
 }
 
+#pragma mark MP4
+
+// Calls `block` for each atom between `start` and `end`. `block` returns NO
+// to stop.
+static void GLMP4Atoms(GLTagFile *file, unsigned long long start, unsigned long long end,
+                       BOOL (^block)(NSString *type, unsigned long long body, unsigned long long length)) {
+    unsigned long long p = start;
+    while (p + 8 <= end) {
+        NSData *header = [file read:p length:8];
+        if (!header) return;
+        const uint8_t *h = header.bytes;
+        unsigned long long size = GLBig32(h);
+        unsigned long long headerLength = 8;
+        if (size == 1) {
+            NSData *large = [file read:p + 8 length:8];
+            if (!large) return;
+            const uint8_t *l = large.bytes;
+            size = (unsigned long long)GLBig32(l) << 32 | GLBig32(l + 4);
+            headerLength = 16;
+        } else if (size == 0) {
+            size = end - p;
+        }
+        if (size < headerLength || p + size > end) return;
+        NSString *type = [[NSString alloc] initWithBytes:h + 4 length:4 encoding:NSISOLatin1StringEncoding];
+        if (!block(type, p + headerLength, size - headerLength)) return;
+        p += size;
+    }
+}
+
+// Finds the first atom with the path of types, for example moov/udta/meta.
+static BOOL GLMP4Find(GLTagFile *file, unsigned long long start, unsigned long long end, NSArray *path,
+                      unsigned long long *bodyOut, unsigned long long *lengthOut) {
+    __block BOOL found = NO;
+    GLMP4Atoms(file, start, end, ^BOOL(NSString *type, unsigned long long body, unsigned long long length) {
+        if (![type isEqualToString:path[0]]) return YES;
+        unsigned long long childStart = body;
+        // The meta atom has 4 bytes of version and flags before its children,
+        // unless the next 4 bytes after them are a handler atom.
+        if ([type isEqualToString:@"meta"]) {
+            NSData *peek = [file read:body + 4 length:4];
+            if (!(peek && memcmp(peek.bytes, "hdlr", 4) == 0)) childStart += 4;
+        }
+        if (path.count == 1) {
+            *bodyOut = childStart;
+            *lengthOut = length - (childStart - body);
+            found = YES;
+        } else {
+            found = GLMP4Find(file, childStart, body + length, [path subarrayWithRange:NSMakeRange(1, path.count - 1)],
+                              bodyOut, lengthOut);
+        }
+        return NO;
+    });
+    return found;
+}
+
+// The payload of the "data" atom inside an item of ilst, and its type.
+static NSData *GLMP4ItemData(GLTagFile *file, unsigned long long body, unsigned long long length, uint32_t *typeOut,
+                             NSString **freeformName) {
+    __block NSData *payload = nil;
+    __block NSString *name = nil;
+    GLMP4Atoms(file, body, body + length, ^BOOL(NSString *type, unsigned long long atomBody, unsigned long long atomLength) {
+        if ([type isEqualToString:@"name"] && atomLength > 4 && atomLength < 1024) {
+            NSData *bytes = [file read:atomBody + 4 length:(NSUInteger)(atomLength - 4)];
+            name = [[NSString alloc] initWithData:bytes encoding:NSUTF8StringEncoding];
+        } else if ([type isEqualToString:@"data"] && atomLength >= 8) {
+            NSData *head = [file read:atomBody length:8];
+            if (typeOut && head) *typeOut = GLBig32(head.bytes) & 0xffffff;
+            if (atomLength - 8 <= 32 * 1024 * 1024) payload = [file read:atomBody + 8 length:(NSUInteger)(atomLength - 8)];
+            return NO;
+        }
+        return YES;
+    });
+    if (freeformName) *freeformName = name;
+    return payload;
+}
+
+static void GLReadMP4(GLTagFile *file, GLTags *tags, BOOL wantPicture) {
+    unsigned long long body = 0, length = 0;
+    if (!GLMP4Find(file, 0, file.size, @[ @"moov", @"udta", @"meta", @"ilst" ], &body, &length)) return;
+    NSDictionary *names = @{
+        @"\u00a9nam": @"title", @"\u00a9ART": @"artist", @"\u00a9alb": @"album", @"aART": @"albumartist",
+        @"\u00a9day": @"date", @"\u00a9gen": @"genre", @"sonm": @"titlesort", @"soar": @"artistsort",
+        @"soal": @"albumsort", @"soaa": @"albumartistsort",
+    };
+    GLMP4Atoms(file, body, body + length, ^BOOL(NSString *type, unsigned long long item, unsigned long long itemLength) {
+        if ([type isEqualToString:@"covr"]) {
+            tags.hasPicture = YES;
+            if (wantPicture && !tags.picture) tags.picture = GLMP4ItemData(file, item, itemLength, NULL, NULL);
+            return YES;
+        }
+        uint32_t dataType = 0;
+        NSString *freeform = nil;
+        NSData *data = GLMP4ItemData(file, item, itemLength, &dataType, &freeform);
+        if (!data) return YES;
+        const uint8_t *d = data.bytes;
+        if ([type isEqualToString:@"trkn"] || [type isEqualToString:@"disk"]) {
+            if (data.length >= 4) {
+                NSInteger number = (NSInteger)(d[2] << 8 | d[3]);
+                if ([type isEqualToString:@"trkn"] && !tags.trackNumber) tags.trackNumber = number;
+                if ([type isEqualToString:@"disk"] && !tags.discNumber) tags.discNumber = number;
+            }
+        } else if ([type isEqualToString:@"cpil"]) {
+            tags.compilation = data.length >= 1 && d[0] != 0;
+        } else if ([type isEqualToString:@"----"]) {
+            GLSetField(tags, freeform, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+        } else {
+            NSString *name = names[type];
+            if (name) GLSetField(tags, name, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+        }
+        return YES;
+    });
+}
+
 #pragma mark The reader
 
 GLTags *GLReadTags(NSString *path, BOOL wantPicture) {
     GLTagFile *file = [GLTagFile fileWithPath:path];
     if (!file) return nil;
     GLTags *tags = [GLTags new];
+    NSData *head = [file read:0 length:12];
+    if (head && memcmp((const uint8_t *)head.bytes + 4, "ftyp", 4) == 0) {
+        GLReadMP4(file, tags, wantPicture);
+        return tags;
+    }
     GLReadID3v2(file, 0, tags, wantPicture);
     return tags;
 }

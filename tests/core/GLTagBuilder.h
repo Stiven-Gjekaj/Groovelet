@@ -24,3 +24,16 @@ NSData *GLBytes(NSString *text);
 // Four bytes, big-endian or little-endian.
 NSData *GLBig32Data(uint32_t value);
 NSData *GLLittle32Data(uint32_t value);
+
+// An MP4 atom with a 4-letter type. The type can start with the byte 0xA9,
+// given as "©".
+NSData *GLMP4Atom(NSString *type, NSArray *children);
+// An item of ilst with a data atom of `dataType` (1 is text, 0 is a number,
+// 13 is JPEG).
+NSData *GLMP4Item(NSString *type, uint32_t dataType, NSData *payload);
+// A text item.
+NSData *GLMP4TextItem(NSString *type, NSString *text);
+// A freeform item "----" with a name, as iTunes writes for ReplayGain.
+NSData *GLMP4FreeformItem(NSString *name, NSString *text);
+// A whole M4A file with the items in moov/udta/meta/ilst.
+NSData *GLMP4File(NSArray *items);
