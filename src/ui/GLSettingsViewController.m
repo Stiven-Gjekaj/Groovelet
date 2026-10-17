@@ -87,7 +87,7 @@ typedef NS_ENUM(NSInteger, GLSettingsSection) {
     if (indexPath.section == GLSectionLibrary) {
         switch (indexPath.row) {
             case 0:
-                return [self switchCellWithTitle:@"Sort \"The\" by the next word" on:settings.ignoreArticles
+                return [self switchCellWithTitle:@"Sort without \"The\"" on:settings.ignoreArticles
                                           action:@selector(toggleArticles:)];
             case 1:
                 return [self switchCellWithTitle:@"Show Folders in More" on:settings.showFolders

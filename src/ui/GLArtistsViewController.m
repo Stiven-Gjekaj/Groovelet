@@ -31,8 +31,7 @@
 }
 
 - (void)configureCell:(GLTrackCell *)cell forItem:(GLArtist *)artist {
-    cell.showsNumber = YES;
-    cell.numberLabel.text = @"";
+    cell.plain = YES;
     cell.titleLabel.text = artist.name;
     cell.subtitleLabel.text = [NSString stringWithFormat:@"%@, %@", GLCountText(artist.albumCount, @"album"),
                                                                     GLCountText(artist.trackCount, @"song")];

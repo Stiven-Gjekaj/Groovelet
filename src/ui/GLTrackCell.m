@@ -61,8 +61,15 @@ static UILabel *GLLabel(UIFont *font, UIColor *color) {
 
 - (void)setShowsNumber:(BOOL)showsNumber {
     _showsNumber = showsNumber;
-    self.artLayer.hidden = showsNumber;
-    self.numberLabel.hidden = !showsNumber;
+    self.artLayer.hidden = self.plain || showsNumber;
+    self.numberLabel.hidden = self.plain || !showsNumber;
+    [self setNeedsLayout];
+}
+
+- (void)setPlain:(BOOL)plain {
+    _plain = plain;
+    self.artLayer.hidden = plain || self.showsNumber;
+    self.numberLabel.hidden = plain || !self.showsNumber;
     [self setNeedsLayout];
 }
 
@@ -70,10 +77,10 @@ static UILabel *GLLabel(UIFont *font, UIColor *color) {
     [super layoutSubviews];
     CGRect bounds = self.contentView.bounds;
     CGFloat left = 10;
-    CGFloat leftWidth = self.showsNumber ? 28 : 44;
+    CGFloat leftWidth = self.plain ? 0 : self.showsNumber ? 28 : 44;
     self.artLayer.frame = CGRectMake(left, (bounds.size.height - 44) / 2, 44, 44);
     self.numberLabel.frame = CGRectMake(left - 2, 0, leftWidth, bounds.size.height);
-    CGFloat textLeft = left + leftWidth + 10;
+    CGFloat textLeft = self.plain ? 16 : left + leftWidth + 10;
     CGFloat timeWidth = self.timeLabel.text.length ? 52 : 0;
     CGFloat textWidth = bounds.size.width - textLeft - timeWidth - 10;
     BOOL two = self.subtitleLabel.text.length > 0;

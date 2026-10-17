@@ -14,6 +14,8 @@
 
 // With YES, the left shows the number and no art.
 @property (nonatomic) BOOL showsNumber;
+// With YES, the left shows nothing, and the text starts at the edge.
+@property (nonatomic) BOOL plain;
 // The track of the row plays now. The title is coral.
 @property (nonatomic) BOOL current;
 
