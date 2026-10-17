@@ -20,6 +20,9 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 // YES while the player starts an entry because of a command, not because the
 // track before it ended.
 @property (nonatomic) BOOL manualStart;
+@property (nonatomic, strong) NSDate *sleepDate;
+@property (nonatomic) BOOL sleepAtEndOfTrack;
+@property (nonatomic, strong) NSTimer *sleepTimer;
 @end
 
 @implementation GLPlayback
@@ -159,7 +162,8 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 
 - (void)prepareNext {
     if (!self.player.currentItem) return;
-    GLQueueEntry *next = self.queue.entryAfterCurrent;
+    // With the sleep timer at the end of the track, nothing follows.
+    GLQueueEntry *next = self.sleepAtEndOfTrack ? nil : self.queue.entryAfterCurrent;
     [self.player setNextItem:next path:next ? GLAbsolutePath(next.track.path) : nil gain:[self gainOfEntry:next]];
 }
 
@@ -266,10 +270,12 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 - (void)audioPlayerDidFinish:(GLAudioPlayer *)player {
     GLLog(@"the queue ended");
     [self countPlayOfEntry:self.queue.currentEntry];
-    // Go back to the first track of the queue, and wait.
-    GLQueueEntry *first = self.queue.entries.firstObject;
-    if (first) {
-        [self.queue moveToEntry:first];
+    // The sleep timer stopped the play at the end of the track. Wait at the
+    // next track. Else go back to the first track of the queue, and wait.
+    GLQueueEntry *wait = self.sleepAtEndOfTrack ? self.queue.entryForNext : self.queue.entries.firstObject;
+    self.sleepAtEndOfTrack = NO;
+    if (wait) {
+        [self.queue moveToEntry:wait];
         [self startCurrentAtTime:0 paused:YES];
     }
     [self changed];
@@ -278,6 +284,55 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 
 - (void)audioPlayerDidChangeState:(GLAudioPlayer *)player {
     [self changed];
+}
+
+#pragma mark The sleep timer
+
+- (void)cancelSleep {
+    [self.sleepTimer invalidate];
+    self.sleepTimer = nil;
+    self.sleepDate = nil;
+    if (self.sleepAtEndOfTrack) {
+        self.sleepAtEndOfTrack = NO;
+        [self prepareNext];
+    }
+}
+
+- (void)sleepAfterSeconds:(double)seconds {
+    [self cancelSleep];
+    if (seconds > 0) {
+        self.sleepDate = [NSDate dateWithTimeIntervalSinceNow:seconds];
+        self.sleepTimer = [NSTimer scheduledTimerWithTimeInterval:seconds target:self selector:@selector(sleepNow)
+                                                         userInfo:nil repeats:NO];
+    }
+    [self changed];
+}
+
+- (void)sleepAtEndOfCurrentTrack {
+    [self cancelSleep];
+    self.sleepAtEndOfTrack = YES;
+    [self prepareNext];
+    [self changed];
+}
+
+// Lowers the volume over 3 seconds, and then pauses.
+- (void)sleepNow {
+    self.sleepTimer = nil;
+    self.sleepDate = nil;
+    GLLog(@"sleep timer");
+    [self fadeStep:@0];
+}
+
+- (void)fadeStep:(NSNumber *)step {
+    int n = step.intValue;
+    if (n >= 30) {
+        [self pause];
+        self.player.volume = 1;
+        [self changed];
+        return;
+    }
+    self.player.volume = 1 - (n + 1) / 30.0;
+    [self performSelector:@selector(fadeStep:) withObject:@(n + 1) afterDelay:0.1];
 }
 
 #pragma mark The lock screen

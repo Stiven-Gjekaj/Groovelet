@@ -46,6 +46,17 @@ extern NSString *const GLPlaybackDidChangeNotification;
 // Call it from the first responder for each remote control event.
 - (void)handleRemoteControlEvent:(UIEvent *)event;
 
+#pragma mark The sleep timer
+
+// The time when the player stops, or nil.
+@property (nonatomic, strong, readonly) NSDate *sleepDate;
+// YES when the player stops at the end of the current track.
+@property (nonatomic, readonly) BOOL sleepAtEndOfTrack;
+// Stops the play after `seconds`, with a short fade. 0 turns the timer off.
+- (void)sleepAfterSeconds:(double)seconds;
+// Stops the play at the end of the current track.
+- (void)sleepAtEndOfCurrentTrack;
+
 // Loads the queue and the place of the last run, away from the main thread.
 // The player waits at the place, paused.
 - (void)restore;
