@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 (2026-10-17)
+
+- A mini player above the tab bar shows the track, play or pause, and next.
+- The player screen shows the art on a blurred copy of it, the scrubber,
+  the controls, the volume, and the AirPlay button.
+- Shuffle and repeat (all and one).
+- The queue screen: move a track, remove a track, or play a track.
+- A long press on a track or an album gives Play Next and Add to Queue.
+- The album page has a Shuffle button.
+- The queue and the place come back after a restart.
+- The lock screen shows the art.
+
 ## 0.3.0 (2026-10-17)
 
 - The app keeps an index of the music in SQLite, and scans the music
