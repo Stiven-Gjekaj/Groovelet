@@ -129,3 +129,29 @@ GL_TEST(test_renderer_keeps_the_next_track_at_a_seek) {
 GL_TEST(test_renderer_cannot_restart_with_no_track) {
     GL_EXPECT(![[GLRenderer new] restartAtTime:1]);
 }
+
+GL_TEST(test_renderer_gives_a_new_start_frame_when_an_item_plays_again) {
+    GLRenderer *renderer = [GLRenderer new];
+    [renderer startItem:@"a" decoder:[GLFakeDecoder decoderWithLength:1000 mark:1] atTime:0];
+    [renderer setNextItem:@"a" decoder:[GLFakeDecoder decoderWithLength:1000 mark:1]];
+    int16_t buffer[4096 * 2];
+    [renderer renderInto:buffer frames:4096];
+    GLRendererPosition *first = [renderer positionAtFrame:500];
+    GLRendererPosition *second = [renderer positionAtFrame:1500];
+    GL_EQUAL(first.item, second.item);
+    GL_EQUAL_INT(first.startFrame, 0);
+    GL_EQUAL_INT(second.startFrame, 1000);
+}
+
+GL_TEST(test_renderer_continues_with_a_next_track_that_comes_after_the_end) {
+    GLRenderer *renderer = [GLRenderer new];
+    [renderer startItem:@"a" decoder:[GLFakeDecoder decoderWithLength:1000 mark:1] atTime:0];
+    int16_t buffer[4096 * 2];
+    GL_EQUAL_INT([renderer renderInto:buffer frames:4096], 1000);
+    GL_EQUAL_INT(renderer.endFrame, 1000);
+    [renderer setNextItem:@"b" decoder:[GLFakeDecoder decoderWithLength:500 mark:2]];
+    GL_EQUAL_INT([renderer renderInto:buffer frames:4096], 500);
+    GL_EQUAL_INT(buffer[0], 2);
+    GL_EQUAL([renderer positionAtFrame:1200].item, @"b");
+    GL_EQUAL_INT(renderer.endFrame, 1500);
+}

@@ -3,6 +3,7 @@
 @interface GLRendererPosition ()
 @property (nonatomic, strong) id item;
 @property (nonatomic) double time;
+@property (nonatomic) int64_t startFrame;
 @end
 
 @implementation GLRendererPosition
@@ -97,6 +98,16 @@
 - (NSUInteger)renderInto:(int16_t *)buffer frames:(NSUInteger)frames {
     @synchronized (self) {
         NSUInteger done = 0;
+        // A next track that came after the end continues the stream.
+        if (!self.currentDecoder && self.nextDecoder && self.endFrame >= 0) {
+            self.currentItem = self.nextItem;
+            self.currentDecoder = self.nextDecoder;
+            self.nextItem = nil;
+            self.nextDecoder = nil;
+            self.endFrame = -1;
+            [self.spans removeLastObject];  // The span of the end.
+            [self addSpanForItem:self.currentItem time:0];
+        }
         while (done < frames && self.currentDecoder) {
             NSInteger n = [self.currentDecoder readFrames:buffer + done * GLOutputChannels count:frames - done];
             if (n > 0) {
@@ -126,6 +137,7 @@
         for (GLRendererSpan *span in self.spans.reverseObjectEnumerator) {
             if (span.startFrame <= frame) {
                 position.item = span.item;
+                position.startFrame = span.startFrame;
                 position.time = span.item ? span.startTime + (double)(frame - span.startFrame) / GLOutputRate : 0;
                 break;
             }

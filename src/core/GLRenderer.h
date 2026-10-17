@@ -12,6 +12,9 @@
 @interface GLRendererPosition : NSObject
 @property (nonatomic, strong, readonly) id item;  // nil before the first frame or after the end
 @property (nonatomic, readonly) double time;      // seconds from the start of the item
+// The frame where this play of the item starts. An item that plays two times
+// in a row, for repeat one, has two start frames.
+@property (nonatomic, readonly) int64_t startFrame;
 @end
 
 @interface GLRenderer : NSObject
@@ -24,7 +27,8 @@
 // The next track stays. Returns NO when no track is left.
 - (BOOL)restartAtTime:(double)seconds;
 
-// Sets the track that follows the current track. nil removes it.
+// Sets the track that follows the current track. nil removes it. When the
+// stream already ended, the next render continues with this track.
 - (void)setNextItem:(id)item decoder:(id<GLDecoder>)decoder;
 
 // The track that the renderer reads now. It can be ahead of the track that
