@@ -12,6 +12,7 @@
 #import "GLNavigationController.h"
 #import "GLPaths.h"
 #import "GLPlayback.h"
+#import "GLPlaylistViewController.h"
 #import "GLPlaylistsViewController.h"
 #import "GLSettings.h"
 #import "GLSongsViewController.h"
@@ -128,6 +129,17 @@
         self.tabs.selectedIndex = 4;
         [self.more.navigationController popToRootViewControllerAnimated:NO];
         [self.more openScreen:name];
+        return;
+    }
+    if ([name isEqualToString:@"playlist"] && path) {
+        GLPlaylist *playlist = [GLPlaylist new];
+        playlist.kind = GLPlaylistFile;
+        playlist.path = path;
+        playlist.name = path.lastPathComponent.stringByDeletingPathExtension;
+        self.tabs.selectedIndex = 3;
+        UINavigationController *navigation = (UINavigationController *)self.tabs.selectedViewController;
+        [navigation popToRootViewControllerAnimated:NO];
+        [navigation pushViewController:[[GLPlaylistViewController alloc] initWithPlaylist:playlist] animated:NO];
         return;
     }
     if ([name isEqualToString:@"album"] && path) {

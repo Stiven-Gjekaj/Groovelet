@@ -5,6 +5,7 @@
 //   groovelet://open?name=NAME             opens a screen: a tab, "folders", "upload",
 //                                          "settings", "player", or "queue"
 //   groovelet://open?name=album&path=PATH  opens the album of the track PATH
+//   groovelet://open?name=playlist&path=PATH  opens the M3U file PATH
 // PATH is relative to the music directory. Each value is percent-encoded.
 
 #import <Foundation/Foundation.h>
