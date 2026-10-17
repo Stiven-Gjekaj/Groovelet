@@ -1,4 +1,5 @@
 #import "GLAppleDecoder.h"
+#import "GLMP3.h"
 #include <AudioToolbox/AudioToolbox.h>
 
 @interface GLAppleDecoder ()
@@ -43,6 +44,11 @@
     decoder.file = file;
     decoder.fileRate = fileFormat.mSampleRate;
     decoder.duration = frames / fileFormat.mSampleRate;
+    // iOS can get the length of an MP3 file wrong. Its own header is exact.
+    if ([path.pathExtension.lowercaseString isEqualToString:@"mp3"]) {
+        double exact = GLMP3Duration(path);
+        if (exact > 0) decoder.duration = exact;
+    }
     return decoder;
 }
 
