@@ -43,7 +43,7 @@ for each choice is in [docs/decisions.md](docs/decisions.md).
 - Read M3U playlists.
 - Keep the play counts, and add the three automatic playlists.
 
-## 0.7: the last features
+## 0.7: the last features (done, 2026-10-17)
 
 - Add ReplayGain.
 - Add the sleep timer.
