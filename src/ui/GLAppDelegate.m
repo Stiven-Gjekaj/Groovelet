@@ -25,6 +25,7 @@
 @implementation GLAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    GLLog(@"launch");
     GLApplyTheme();
     [GLLibrary shared].ignoreArticles = [GLSettings shared].ignoreArticles;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(settingsChanged)

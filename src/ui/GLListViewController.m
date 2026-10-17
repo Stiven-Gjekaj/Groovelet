@@ -1,5 +1,6 @@
 #import "GLListViewController.h"
 #import "GLLibrary.h"
+#import "GLLog.h"
 #import "GLPlayback.h"
 #import "GLSort.h"
 #import "GLTheme.h"
@@ -61,12 +62,17 @@
 - (void)reload {
     NSUInteger token = ++self.loadToken;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        NSDate *start = [NSDate date];
         NSArray *items = [self loadItems] ?: @[];
+        double loading = -[start timeIntervalSinceNow];
         dispatch_async(dispatch_get_main_queue(), ^{
             if (token != self.loadToken) return;
             self.items = items;
             self.loaded = YES;
+            NSDate *shown = [NSDate date];
             [self applySearch];
+            GLLog(@"%@: %lu items, %.2f s to load, %.2f s to show", self.title, (unsigned long)items.count, loading,
+                  -[shown timeIntervalSinceNow]);
         });
     });
 }
