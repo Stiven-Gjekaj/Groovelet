@@ -116,7 +116,7 @@ static CGImageRef GLSquareImage(CGImageRef image, size_t pixels, BOOL blur) {
             CGContextDrawImage(context, CGRectMake(0, 0, pixels, pixels), small);
             CGImageRelease(small);
         }
-        CGContextSetRGBFillColor(context, 0, 0, 0, 0.55);
+        CGContextSetRGBFillColor(context, 0, 0, 0, 0.62);
         CGContextFillRect(context, CGRectMake(0, 0, pixels, pixels));
     } else {
         CGContextDrawImage(context, rect, image);
