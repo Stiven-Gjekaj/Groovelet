@@ -7,6 +7,15 @@ light and fast on the A5 chip. You install it as a .deb package.
 The decisions and their reasons are in [docs/decisions.md](docs/decisions.md).
 The plan is in [TODO.md](TODO.md).
 
+## Install
+
+1. Copy the .deb to the phone, for example with
+   `scp io.github.stivengjekaj.groovelet_1.0.0_iphoneos-arm.deb iphone4s:/tmp/`.
+2. Install it as root: `dpkg -i /tmp/io.github.stivengjekaj.groovelet_1.0.0_iphoneos-arm.deb`.
+
+The APT of Cydia on iOS 6 speaks only TLS 1.0, and GitHub accepts only TLS
+1.2, so `dpkg -i` is the way on iOS 6.
+
 ## Put music on the phone
 
 The music is in `/var/mobile/Media/Groovelet`. Each folder and file there
