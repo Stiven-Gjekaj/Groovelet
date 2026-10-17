@@ -35,7 +35,18 @@ Each entry gives the reason. The owner made these choices on 2026-10-17.
 
 ## How files get onto the phone
 
-- **iTunes File Sharing** (`UIFileSharingEnabled`).
+- **The music is in `/var/mobile/Media/Groovelet`** (decided during 0.1,
+  2026-10-17). The app is in `/Applications`, so iOS runs it as a system
+  app with the home directory `/var/mobile`. All such apps share
+  `/var/mobile/Documents`. Another app already keeps a video there.
+  `/var/mobile/Media` is the root of AFC, the file service of iOS over USB.
+- **USB copy with an AFC tool replaces iTunes File Sharing.** A test on the
+  iPhone 4S (2026-10-17) showed that iTunes File Sharing cannot reach an app
+  in `/Applications`: the house_arrest service of iOS answers
+  `InstallationLookupFailed`, also for ZettaLite, which has
+  `UIFileSharingEnabled`. Plain AFC shows `Media/Groovelet` with no
+  jailbreak tool. iFunBox, iMazing, 3uTools, and `afcclient` of
+  libimobiledevice copy files there.
 - **A Wi-Fi upload page.** The app runs a small HTTP server that serves one
   page. A browser on the same network drops files and folders on it.
   - The server runs only while the Upload screen is open. The screen stays
@@ -47,7 +58,7 @@ Each entry gives the reason. The owner made these choices on 2026-10-17.
   - The index scans the new files when the upload ends.
 - **"Open in Groovelet"** from Mail, Safari, and other apps
   (`CFBundleDocumentTypes`).
-- Files that scp copies into `Documents/` also work.
+- Files that scp copies into `/var/mobile/Media/Groovelet` also work.
 - **No download from a URL.** It needs the TLS of mbedTLS, because the TLS
   of iOS 6 fails with many servers. ZettaLite shows this.
 
@@ -64,6 +75,16 @@ Each entry gives the reason. The owner made these choices on 2026-10-17.
   this reason.
 
 ## Playback
+
+- **One AudioQueue plays all tracks.** `GLRenderer` reads the decoders and
+  fills the buffers of the queue. When a track ends inside a buffer, the next
+  track starts in the same buffer. The renderer counts the frames, and the
+  time of the queue tells which track plays now.
+- **4 buffers of 8192 frames** (0.74 seconds). A larger buffer wakes the CPU
+  less often. A seek makes a new queue and fills it at once.
+- **The decoders of Apple drop the priming frames and the padding of AAC.**
+  A test on the iPhone 4S (2026-10-17) decoded 3 seconds of AAC from
+  ExtAudioFile as exactly 132300 frames.
 
 Version 1.0 has these features:
 
@@ -99,7 +120,7 @@ lyrics, and scrobbling.
 
 - The owner makes playlists in the app. A playlist can get tracks, lose
   tracks, and change its order.
-- The app reads `.m3u` and `.m3u8` files in Documents as playlists that
+- The app reads `.m3u` and `.m3u8` files in the music directory as playlists that
   cannot change.
 - Three playlists are automatic: Recently Added, Most Played, and Recently
   Played. The index keeps a play count and the date of the last play of
