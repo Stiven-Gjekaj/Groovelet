@@ -46,10 +46,18 @@
     self.window.rootViewController = self.tabs;
     [self.window makeKeyAndVisible];
 
-    [GLPlayback shared];
+    [[GLPlayback shared] restore];
     [application beginReceivingRemoteControlEvents];
     [self becomeFirstResponder];
     return YES;
+}
+
+- (void)applicationDidEnterBackground:(UIApplication *)application {
+    [[GLPlayback shared] save];
+}
+
+- (void)applicationWillTerminate:(UIApplication *)application {
+    [[GLPlayback shared] save];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
