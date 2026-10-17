@@ -13,7 +13,7 @@ for each choice is in [docs/decisions.md](docs/decisions.md).
 - Show the track on the lock screen, and obey the remote controls.
 - Show a plain list of the files in the music directory.
 
-## 0.2: more formats
+## 0.2: more formats (done, 2026-10-17)
 
 - Build FFmpeg 7.1 LGPL for armv7 iOS 6, with only the audio decoders and
   demuxers.
