@@ -1,4 +1,5 @@
 #import "GLLibrary.h"
+#import "GLM3U.h"
 #import "GLPaths.h"
 #import "GLSort.h"
 #include <sqlite3.h>
@@ -14,8 +15,14 @@ NSString *const GLLibraryDidChangeNotification = @"GLLibraryDidChange";
 @implementation GLFolderContent
 @end
 
+@implementation GLPlaylist
+@end
+
+// The automatic playlists hold at most this many tracks.
+static const int GLAutomaticLimit = 100;
+
 // The version of the schema. A newer app changes an older database.
-static const int GLSchemaVersion = 2;
+static const int GLSchemaVersion = 3;
 
 static NSString *const GLTrackColumns =
     @"id, path, size, modified, added, title, artist, album, album_artist, genre, sort_title, sort_artist, "
@@ -124,6 +131,18 @@ static double GLColumnDouble(sqlite3_stmt *statement, int index) {
                                  @"album_sort, album_sort_the, year, duration)"];
         ok = ok && [self execute:@"CREATE INDEX tracks_album_art ON tracks (album_key, has_picture DESC, disc_number, "
                                  @"track_number, path)"];
+    }
+    if (version < 3) {
+        // A playlist keeps the paths of its tracks, so that it stays correct
+        // when a scan adds a file again with a new ID.
+        ok = ok && [self execute:@"CREATE TABLE playlists (id INTEGER PRIMARY KEY, name TEXT NOT NULL, created REAL)"];
+        ok = ok && [self execute:@"CREATE TABLE playlist_items (playlist_id INTEGER NOT NULL, position INTEGER NOT NULL, "
+                                 @"path TEXT NOT NULL)"];
+        ok = ok && [self execute:@"CREATE INDEX playlist_items_list ON playlist_items (playlist_id, position)"];
+        ok = ok && [self execute:@"CREATE TABLE playlist_files (path TEXT PRIMARY KEY)"];
+        ok = ok && [self execute:@"CREATE INDEX tracks_played ON tracks (last_played)"];
+        ok = ok && [self execute:@"CREATE INDEX tracks_count ON tracks (play_count)"];
+        ok = ok && [self execute:@"CREATE INDEX tracks_added ON tracks (added)"];
     }
     ok = ok && [self execute:[NSString stringWithFormat:@"PRAGMA user_version = %d", GLSchemaVersion]];
     return [self execute:ok ? @"COMMIT" : @"ROLLBACK"] && ok;
@@ -425,6 +444,216 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
         }].firstObject;
     });
     return track;
+}
+
+#pragma mark Playlists
+
+- (void)setPlaylistFiles:(NSArray *)paths {
+    dispatch_sync(self.queue, ^{
+        [self execute:@"BEGIN"];
+        [self execute:@"DELETE FROM playlist_files"];
+        sqlite3_stmt *statement = [self prepare:@"INSERT OR IGNORE INTO playlist_files (path) VALUES (?1)"];
+        for (NSString *path in paths) {
+            GLBindText(statement, 1, path);
+            sqlite3_step(statement);
+            sqlite3_reset(statement);
+        }
+        sqlite3_finalize(statement);
+        [self execute:@"COMMIT"];
+    });
+}
+
+- (NSArray *)playlists {
+    __block NSMutableArray *playlists = [NSMutableArray array];
+    NSArray *automatic = @[ @[ @(GLPlaylistRecentlyAdded), @"Recently Added" ],
+                            @[ @(GLPlaylistMostPlayed), @"Most Played" ],
+                            @[ @(GLPlaylistRecentlyPlayed), @"Recently Played" ] ];
+    for (NSArray *pair in automatic) {
+        GLPlaylist *playlist = [GLPlaylist new];
+        playlist.kind = [pair[0] integerValue];
+        playlist.name = pair[1];
+        playlist.trackCount = -1;
+        [playlists addObject:playlist];
+    }
+    dispatch_sync(self.queue, ^{
+        sqlite3_stmt *statement = [self prepare:@"SELECT path FROM playlist_files ORDER BY path"];
+        while (statement && sqlite3_step(statement) == SQLITE_ROW) {
+            GLPlaylist *playlist = [GLPlaylist new];
+            playlist.kind = GLPlaylistFile;
+            playlist.path = GLColumnText(statement, 0);
+            playlist.name = playlist.path.lastPathComponent.stringByDeletingPathExtension;
+            playlist.trackCount = -1;
+            [playlists addObject:playlist];
+        }
+        sqlite3_finalize(statement);
+        statement = [self prepare:@"SELECT p.id, p.name, (SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id = p.id) "
+                                  @"FROM playlists p ORDER BY p.name COLLATE NOCASE"];
+        while (statement && sqlite3_step(statement) == SQLITE_ROW) {
+            GLPlaylist *playlist = [GLPlaylist new];
+            playlist.kind = GLPlaylistUser;
+            playlist.playlistID = sqlite3_column_int64(statement, 0);
+            playlist.name = GLColumnText(statement, 1);
+            playlist.trackCount = sqlite3_column_int(statement, 2);
+            [playlists addObject:playlist];
+        }
+        sqlite3_finalize(statement);
+    });
+    return playlists;
+}
+
+// The tracks for a list of paths, in the order of the paths. A path with no
+// row is left out. Call it on the queue.
+- (NSArray *)tracksForPaths:(NSArray *)paths {
+    NSMutableArray *tracks = [NSMutableArray array];
+    sqlite3_stmt *statement = [self prepare:[NSString stringWithFormat:@"SELECT %@ FROM tracks WHERE path = ?1",
+                                                                       GLTrackColumns]];
+    for (NSString *path in paths) {
+        GLBindText(statement, 1, path);
+        if (sqlite3_step(statement) == SQLITE_ROW) [tracks addObject:[self trackFromRow:statement]];
+        sqlite3_reset(statement);
+    }
+    sqlite3_finalize(statement);
+    return tracks;
+}
+
+- (NSArray *)tracksOfPlaylist:(GLPlaylist *)playlist musicDirectory:(NSString *)musicDirectory {
+    __block NSArray *tracks = @[];
+    NSArray *filePaths = nil;
+    if (playlist.kind == GLPlaylistFile) {
+        NSData *data = [NSData dataWithContentsOfFile:[musicDirectory stringByAppendingPathComponent:playlist.path]];
+        filePaths = data ? GLReadM3U(data, playlist.path, musicDirectory) : @[];
+    }
+    dispatch_sync(self.queue, ^{
+        switch (playlist.kind) {
+            case GLPlaylistFile:
+                tracks = [self tracksForPaths:filePaths];
+                break;
+            case GLPlaylistUser: {
+                NSMutableArray *paths = [NSMutableArray array];
+                sqlite3_stmt *statement = [self prepare:@"SELECT path FROM playlist_items WHERE playlist_id = ?1 "
+                                                        @"ORDER BY position"];
+                sqlite3_bind_int64(statement, 1, playlist.playlistID);
+                while (statement && sqlite3_step(statement) == SQLITE_ROW) [paths addObject:GLColumnText(statement, 0)];
+                sqlite3_finalize(statement);
+                tracks = [self tracksForPaths:paths];
+                break;
+            }
+            case GLPlaylistRecentlyAdded:
+                tracks = [self tracksWhere:[NSString stringWithFormat:@"ORDER BY added DESC, path LIMIT %d",
+                                                                      GLAutomaticLimit] bind:nil];
+                break;
+            case GLPlaylistMostPlayed:
+                tracks = [self tracksWhere:[NSString stringWithFormat:
+                                               @"WHERE play_count > 0 ORDER BY play_count DESC, last_played DESC LIMIT %d",
+                                               GLAutomaticLimit] bind:nil];
+                break;
+            case GLPlaylistRecentlyPlayed:
+                tracks = [self tracksWhere:[NSString stringWithFormat:
+                                               @"WHERE last_played > 0 ORDER BY last_played DESC LIMIT %d",
+                                               GLAutomaticLimit] bind:nil];
+                break;
+        }
+    });
+    return tracks;
+}
+
+- (GLPlaylist *)createPlaylistNamed:(NSString *)name {
+    __block GLPlaylist *playlist = nil;
+    dispatch_sync(self.queue, ^{
+        sqlite3_stmt *statement = [self prepare:@"INSERT INTO playlists (name, created) VALUES (?1, ?2)"];
+        GLBindText(statement, 1, name);
+        sqlite3_bind_double(statement, 2, [NSDate date].timeIntervalSince1970);
+        if (sqlite3_step(statement) == SQLITE_DONE) {
+            playlist = [GLPlaylist new];
+            playlist.kind = GLPlaylistUser;
+            playlist.playlistID = sqlite3_last_insert_rowid(self.db);
+            playlist.name = name;
+            playlist.trackCount = 0;
+        }
+        sqlite3_finalize(statement);
+    });
+    return playlist;
+}
+
+- (void)renamePlaylist:(GLPlaylist *)playlist to:(NSString *)name {
+    if (playlist.kind != GLPlaylistUser) return;
+    dispatch_sync(self.queue, ^{
+        sqlite3_stmt *statement = [self prepare:@"UPDATE playlists SET name = ?1 WHERE id = ?2"];
+        GLBindText(statement, 1, name);
+        sqlite3_bind_int64(statement, 2, playlist.playlistID);
+        sqlite3_step(statement);
+        sqlite3_finalize(statement);
+    });
+    playlist.name = name;
+}
+
+- (void)deletePlaylist:(GLPlaylist *)playlist {
+    if (playlist.kind != GLPlaylistUser) return;
+    dispatch_sync(self.queue, ^{
+        [self execute:@"BEGIN"];
+        for (NSString *sql in @[ @"DELETE FROM playlist_items WHERE playlist_id = ?1", @"DELETE FROM playlists WHERE id = ?1" ]) {
+            sqlite3_stmt *statement = [self prepare:sql];
+            sqlite3_bind_int64(statement, 1, playlist.playlistID);
+            sqlite3_step(statement);
+            sqlite3_finalize(statement);
+        }
+        [self execute:@"COMMIT"];
+    });
+}
+
+// Writes the paths as the items of the playlist, from `start` on. Call it on
+// the queue, in a transaction.
+- (void)writePaths:(NSArray *)paths toPlaylist:(int64_t)playlistID fromPosition:(NSInteger)start {
+    sqlite3_stmt *statement = [self prepare:@"INSERT INTO playlist_items (playlist_id, position, path) VALUES (?1, ?2, ?3)"];
+    NSInteger position = start;
+    for (NSString *path in paths) {
+        sqlite3_bind_int64(statement, 1, playlistID);
+        sqlite3_bind_int64(statement, 2, position++);
+        GLBindText(statement, 3, path);
+        sqlite3_step(statement);
+        sqlite3_reset(statement);
+    }
+    sqlite3_finalize(statement);
+}
+
+- (void)addTracks:(NSArray *)tracks toPlaylist:(GLPlaylist *)playlist {
+    if (playlist.kind != GLPlaylistUser || !tracks.count) return;
+    dispatch_sync(self.queue, ^{
+        [self execute:@"BEGIN"];
+        sqlite3_stmt *statement = [self prepare:@"SELECT COALESCE(MAX(position) + 1, 0) FROM playlist_items "
+                                                @"WHERE playlist_id = ?1"];
+        sqlite3_bind_int64(statement, 1, playlist.playlistID);
+        NSInteger start = sqlite3_step(statement) == SQLITE_ROW ? sqlite3_column_int(statement, 0) : 0;
+        sqlite3_finalize(statement);
+        [self writePaths:[tracks valueForKey:@"path"] toPlaylist:playlist.playlistID fromPosition:start];
+        [self execute:@"COMMIT"];
+    });
+}
+
+- (void)setTracks:(NSArray *)tracks ofPlaylist:(GLPlaylist *)playlist {
+    if (playlist.kind != GLPlaylistUser) return;
+    dispatch_sync(self.queue, ^{
+        [self execute:@"BEGIN"];
+        sqlite3_stmt *statement = [self prepare:@"DELETE FROM playlist_items WHERE playlist_id = ?1"];
+        sqlite3_bind_int64(statement, 1, playlist.playlistID);
+        sqlite3_step(statement);
+        sqlite3_finalize(statement);
+        [self writePaths:[tracks valueForKey:@"path"] toPlaylist:playlist.playlistID fromPosition:0];
+        [self execute:@"COMMIT"];
+    });
+}
+
+#pragma mark Plays
+
+- (void)recordPlayOfPath:(NSString *)path {
+    dispatch_sync(self.queue, ^{
+        sqlite3_stmt *statement = [self prepare:@"UPDATE tracks SET play_count = play_count + 1, last_played = ?1 "
+                                                @"WHERE path = ?2"];
+        sqlite3_bind_double(statement, 1, [NSDate date].timeIntervalSince1970);
+        GLBindText(statement, 2, path);
+        sqlite3_step(statement);
+        sqlite3_finalize(statement);
+    });
 }
 
 - (void)postChange {

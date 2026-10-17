@@ -29,6 +29,22 @@ extern NSString *const GLLibraryDidChangeNotification;
 @property (nonatomic, copy) NSString *artPath;
 @end
 
+typedef NS_ENUM(NSInteger, GLPlaylistKind) {
+    GLPlaylistUser,            // Made in the app
+    GLPlaylistFile,            // An M3U file in the music directory
+    GLPlaylistRecentlyAdded,   // Automatic
+    GLPlaylistMostPlayed,      // Automatic
+    GLPlaylistRecentlyPlayed,  // Automatic
+};
+
+@interface GLPlaylist : NSObject
+@property (nonatomic) GLPlaylistKind kind;
+@property (nonatomic) int64_t playlistID;  // For a playlist of the app
+@property (nonatomic, copy) NSString *path;  // For an M3U file, relative to the music directory
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic) NSInteger trackCount;  // -1 when unknown
+@end
+
 // The direct content of a folder of the music directory.
 @interface GLFolderContent : NSObject
 @property (nonatomic, copy) NSArray *folders;  // Names, sorted
@@ -55,6 +71,8 @@ extern NSString *const GLLibraryDidChangeNotification;
 // its ID, its play count, and its date of addition.
 - (void)saveTracks:(NSArray *)tracks;
 - (void)removePaths:(NSArray *)paths;
+// Replaces the list of the M3U files in the music directory.
+- (void)setPlaylistFiles:(NSArray *)paths;
 
 #pragma mark For the screens
 
@@ -70,6 +88,27 @@ extern NSString *const GLLibraryDidChangeNotification;
 // `folder` is relative to the music directory. "" is the top.
 - (GLFolderContent *)contentOfFolder:(NSString *)folder;
 - (GLTrack *)trackWithPath:(NSString *)path;
+
+#pragma mark Playlists
+
+// The automatic playlists, the M3U files, and the playlists of the app.
+- (NSArray *)playlists;
+// The tracks of a playlist, in its order. A file that is gone is left out.
+// `musicDirectory` is for the M3U files.
+- (NSArray *)tracksOfPlaylist:(GLPlaylist *)playlist musicDirectory:(NSString *)musicDirectory;
+// Makes a playlist of the app and returns it.
+- (GLPlaylist *)createPlaylistNamed:(NSString *)name;
+- (void)renamePlaylist:(GLPlaylist *)playlist to:(NSString *)name;
+- (void)deletePlaylist:(GLPlaylist *)playlist;
+// Puts the tracks at the end of a playlist of the app.
+- (void)addTracks:(NSArray *)tracks toPlaylist:(GLPlaylist *)playlist;
+// Replaces the tracks of a playlist of the app, for a move or a removal.
+- (void)setTracks:(NSArray *)tracks ofPlaylist:(GLPlaylist *)playlist;
+
+#pragma mark Plays
+
+// Adds one to the play count of the track, and keeps the time of the play.
+- (void)recordPlayOfPath:(NSString *)path;
 
 // Posts GLLibraryDidChangeNotification on the main thread.
 - (void)postChange;
