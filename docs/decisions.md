@@ -193,6 +193,16 @@ lyrics, and scrobbling.
   Played. The index keeps a play count and the date of the last play of
   each track.
 
+- **A playlist of the app keeps the paths of its tracks** (0.6), not the IDs
+  of the rows. A scan gives a new ID to a file that went away and came back.
+  A path that has no file now is left out of the list, and stays in the
+  playlist for when the file comes back.
+- **The scan finds the M3U files.** The app reads an M3U file when the
+  owner opens it, so a change to the file shows at once.
+- **A play counts** when the track plays to its end, or when the owner
+  leaves it after more than half. The automatic playlists hold at most 100
+  tracks.
+
 ## File management
 
 - The app deletes a track, an album, or a folder from the phone, after a
