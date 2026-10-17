@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0 (2026-10-17)
+
+- The app keeps an index of the music in SQLite, and scans the music
+  directory at the start and when it comes back to the front.
+- Five tabs: Artists, Albums, Songs, Playlists, and More. More holds Folders
+  and Settings.
+- The Albums tab is a grid of the art. An album page shows the tracks and a
+  Play button.
+- Each list has a search box, and the long lists have an index of letters.
+- The app reads the tags of ID3, MP4, FLAC, Ogg, APE, WAV, and AIFF files,
+  and the art in the file or in a cover image of the folder.
+- A dark theme with the coral accent and the Inter font.
+- With 10000 songs, the list of songs shows in 0.74 seconds after the launch.
+
 ## 0.2.0 (2026-10-17)
 
 - The app plays FLAC, Opus, Ogg Vorbis, APE, and WavPack with an audio-only
