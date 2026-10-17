@@ -37,7 +37,7 @@ for each choice is in [docs/decisions.md](docs/decisions.md).
 - Add the Wi-Fi upload page.
 - Add "Open in Groovelet".
 
-## 0.6: playlists
+## 0.6: playlists (done, 2026-10-17)
 
 - Make and edit playlists in the app.
 - Read M3U playlists.
