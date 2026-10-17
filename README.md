@@ -17,6 +17,12 @@ Vorbis, APE, and WavPack.
   an AFC tool, for example iFunBox, iMazing, 3uTools, or `afcclient` of
   libimobiledevice. iTunes File Sharing does not show an app in
   `/Applications`.
+- **Over Wi-Fi:** open More, then Upload over Wi-Fi. Open the address that
+  the screen shows in a browser on a computer on the same network. Drop
+  files or folders on the page. The page works only while the screen is
+  open.
+- **From another app:** use "Open in Groovelet" in Mail, Safari, or another
+  app. The file goes into `Imported`.
 - **Over SSH:** `scp -r Album iphone4s:/var/mobile/Media/Groovelet/`
 
 ## Screens
