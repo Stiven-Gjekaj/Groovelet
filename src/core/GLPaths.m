@@ -16,7 +16,7 @@ static NSString *GLMakeDirectory(NSString *path) {
 }
 
 NSString *GLMusicDirectory(void) {
-    return GLMakeDirectory([GLRoot() stringByAppendingPathComponent:@"Documents"]);
+    return GLMakeDirectory([GLRoot() stringByAppendingPathComponent:@"Media/Groovelet"]);
 }
 
 NSString *GLSupportDirectory(void) {

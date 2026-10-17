@@ -19,5 +19,6 @@ GL_TEST(test_paths_make_the_directories) {
     GL_EXPECT([[NSFileManager defaultManager] fileExistsAtPath:GLSupportDirectory() isDirectory:&isDirectory] &&
               isDirectory);
     GL_EXPECT([GLCacheDirectory() hasSuffix:@"Library/Caches/Groovelet"]);
+    GL_EXPECT([GLMusicDirectory() hasSuffix:@"/Media/Groovelet"]);
     GLSetRootDirectory(nil);
 }
