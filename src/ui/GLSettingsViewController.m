@@ -9,6 +9,7 @@
 #import "GLTheme.h"
 
 typedef NS_ENUM(NSInteger, GLSettingsSection) {
+    GLSectionSound,
     GLSectionLibrary,
     GLSectionAbout,
     GLSectionCount,
@@ -38,11 +39,11 @@ typedef NS_ENUM(NSInteger, GLSettingsSection) {
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return section == GLSectionLibrary ? 3 : 3;
+    return section == GLSectionSound ? 1 : 3;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    return section == GLSectionLibrary ? @"Library" : @"About";
+    return @[ @"Sound", @"Library", @"About" ][section];
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
@@ -84,6 +85,17 @@ typedef NS_ENUM(NSInteger, GLSettingsSection) {
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     GLSettings *settings = [GLSettings shared];
+    if (indexPath.section == GLSectionSound) {
+        UITableViewCell *cell = [self cellWithTitle:@"ReplayGain" detail:nil];
+        UISegmentedControl *control = [[UISegmentedControl alloc] initWithItems:@[ @"Off", @"Track", @"Album" ]];
+        control.segmentedControlStyle = UISegmentedControlStyleBar;
+        control.frame = CGRectMake(0, 0, 170, 30);
+        control.selectedSegmentIndex = settings.replayGainMode;
+        [control addTarget:self action:@selector(replayGainChanged:) forControlEvents:UIControlEventValueChanged];
+        cell.accessoryView = control;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        return cell;
+    }
     if (indexPath.section == GLSectionLibrary) {
         switch (indexPath.row) {
             case 0:
@@ -117,6 +129,11 @@ typedef NS_ENUM(NSInteger, GLSettingsSection) {
         default:
             return [self cellWithTitle:@"Groovelet on GitHub" detail:nil];
     }
+}
+
+- (void)replayGainChanged:(UISegmentedControl *)control {
+    // The next track plays with the new gain.
+    [GLSettings shared].replayGainMode = control.selectedSegmentIndex;
 }
 
 - (void)toggleArticles:(UISwitch *)control {
