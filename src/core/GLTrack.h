@@ -11,7 +11,7 @@ extern NSString *const GLVariousArtists;
 // The name of an artist that the tags do not give.
 extern NSString *const GLUnknownArtist;
 
-@interface GLTrack : NSObject <NSCoding>
+@interface GLTrack : NSObject
 
 @property (nonatomic) int64_t trackID;      // The row in the library, or 0
 @property (nonatomic, copy) NSString *path;  // Relative to the music directory
@@ -39,8 +39,7 @@ extern NSString *const GLUnknownArtist;
 @property (nonatomic) double added;      // Seconds since 1970
 @property (nonatomic) NSInteger playCount;
 @property (nonatomic) double lastPlayed;  // Seconds since 1970, or 0
-// The key that the list of songs sorts by. The library sets it. It is not
-// kept in an archive.
+// The key that the list of songs sorts by. The library sets it.
 @property (nonatomic, copy) NSString *sortKey;
 
 // A track with only a path. The title is the file name with no extension.

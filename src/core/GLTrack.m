@@ -67,39 +67,4 @@ NSString *const GLUnknownArtist = @"Unknown Artist";
                                       self.displayAlbum.lowercaseString];
 }
 
-- (instancetype)initWithCoder:(NSCoder *)coder {
-    if ((self = [self init])) {
-        _trackID = [coder decodeInt64ForKey:@"id"];
-        _path = [coder decodeObjectForKey:@"path"];
-        _title = [coder decodeObjectForKey:@"title"];
-        _artist = [coder decodeObjectForKey:@"artist"];
-        _album = [coder decodeObjectForKey:@"album"];
-        _albumArtist = [coder decodeObjectForKey:@"albumArtist"];
-        _compilation = [coder decodeBoolForKey:@"compilation"];
-        _duration = [coder decodeDoubleForKey:@"duration"];
-        _hasPicture = [coder decodeBoolForKey:@"hasPicture"];
-        if ([coder containsValueForKey:@"trackGain"]) _trackGain = [coder decodeDoubleForKey:@"trackGain"];
-        if ([coder containsValueForKey:@"trackPeak"]) _trackPeak = [coder decodeDoubleForKey:@"trackPeak"];
-        if ([coder containsValueForKey:@"albumGain"]) _albumGain = [coder decodeDoubleForKey:@"albumGain"];
-        if ([coder containsValueForKey:@"albumPeak"]) _albumPeak = [coder decodeDoubleForKey:@"albumPeak"];
-    }
-    return self;
-}
-
-- (void)encodeWithCoder:(NSCoder *)coder {
-    [coder encodeInt64:self.trackID forKey:@"id"];
-    [coder encodeObject:self.path forKey:@"path"];
-    [coder encodeObject:self.title forKey:@"title"];
-    [coder encodeObject:self.artist forKey:@"artist"];
-    [coder encodeObject:self.album forKey:@"album"];
-    [coder encodeObject:self.albumArtist forKey:@"albumArtist"];
-    [coder encodeBool:self.compilation forKey:@"compilation"];
-    [coder encodeDouble:self.duration forKey:@"duration"];
-    [coder encodeBool:self.hasPicture forKey:@"hasPicture"];
-    if (!isnan(self.trackGain)) [coder encodeDouble:self.trackGain forKey:@"trackGain"];
-    if (!isnan(self.trackPeak)) [coder encodeDouble:self.trackPeak forKey:@"trackPeak"];
-    if (!isnan(self.albumGain)) [coder encodeDouble:self.albumGain forKey:@"albumGain"];
-    if (!isnan(self.albumPeak)) [coder encodeDouble:self.albumPeak forKey:@"albumPeak"];
-}
-
 @end

@@ -37,13 +37,3 @@ GL_TEST(test_track_prefers_the_album_artist) {
     GL_EQUAL(track.displayArtist, @"Guest");
     GL_EXPECT([track.albumKey hasPrefix:@"band"]);
 }
-
-GL_TEST(test_track_comes_back_from_an_archive_with_its_gain) {
-    GLTrack *track = [GLTrack trackWithPath:@"a.mp3"];
-    track.albumArtist = @"Band";
-    track.trackGain = -4.5;
-    GLTrack *copy = [NSKeyedUnarchiver unarchiveObjectWithData:[NSKeyedArchiver archivedDataWithRootObject:track]];
-    GL_EQUAL(copy.albumArtist, @"Band");
-    GL_EXPECT(copy.trackGain == -4.5);
-    GL_EXPECT(isnan(copy.albumGain));
-}
