@@ -15,12 +15,12 @@ typedef NS_ENUM(NSInteger, GLRepeatMode) {
     GLRepeatOne = 2,
 };
 
-@interface GLQueueEntry : NSObject <NSCoding>
+@interface GLQueueEntry : NSObject
 @property (nonatomic, strong, readonly) GLTrack *track;
 + (instancetype)entryWithTrack:(GLTrack *)track;
 @end
 
-@interface GLPlayQueue : NSObject <NSCoding>
+@interface GLPlayQueue : NSObject
 
 @property (nonatomic, readonly) NSArray *entries;
 // The place of the current entry, or NSNotFound when the queue is empty.
@@ -55,5 +55,13 @@ typedef NS_ENUM(NSInteger, GLRepeatMode) {
 - (BOOL)removeEntryAtIndex:(NSUInteger)index;
 
 - (void)clear;
+
+// The queue as a property list: the paths, the order of the source, the
+// place, shuffle, and repeat. A property list of 10000 paths is fast to
+// write, and a keyed archive of 10000 tracks is not.
+- (NSDictionary *)state;
+// A queue from a state. `lookup` gives the track of a path, or nil for a file
+// that is gone. The entries of the files that are gone are dropped.
++ (instancetype)queueWithState:(NSDictionary *)state lookup:(GLTrack *(^)(NSString *path))lookup;
 
 @end

@@ -3,6 +3,12 @@
 #import "GLPlayQueue.h"
 #import "GLTest.h"
 
+static NSArray *GLTitles(NSArray *entries) {
+    NSMutableArray *titles = [NSMutableArray array];
+    for (GLQueueEntry *entry in entries) [titles addObject:entry.track.title];
+    return titles;
+}
+
 static NSArray *GLTracks(NSArray *names) {
     NSMutableArray *tracks = [NSMutableArray array];
     for (NSString *name in names) [tracks addObject:[GLTrack trackWithPath:[name stringByAppendingString:@".mp3"]]];
@@ -37,19 +43,30 @@ GL_TEST(test_queue_keeps_two_places_for_the_same_track) {
     GL_EXPECT(![queue moveToEntry:[GLQueueEntry entryWithTrack:track]]);
 }
 
-GL_TEST(test_queue_comes_back_from_an_archive) {
+static GLTrack *(^GLLookup)(NSString *) = ^GLTrack *(NSString *path) {
+    return [path hasPrefix:@"gone"] ? nil : [GLTrack trackWithPath:path];
+};
+
+GL_TEST(test_queue_comes_back_from_its_state) {
     GLPlayQueue *queue = [GLPlayQueue new];
     [queue setTracks:GLTracks(@[ @"a", @"b", @"c" ]) currentIndex:2];
-    GLPlayQueue *copy = [NSKeyedUnarchiver unarchiveObjectWithData:[NSKeyedArchiver archivedDataWithRootObject:queue]];
+    NSDictionary *state = [NSPropertyListSerialization
+        propertyListWithData:[NSPropertyListSerialization dataWithPropertyList:queue.state
+                                                                        format:NSPropertyListBinaryFormat_v1_0
+                                                                       options:0 error:NULL]
+                     options:0 format:NULL error:NULL];
+    GLPlayQueue *copy = [GLPlayQueue queueWithState:state lookup:GLLookup];
     GL_EQUAL_INT(copy.entries.count, 3);
     GL_EQUAL_INT(copy.index, 2);
     GL_EQUAL(copy.currentEntry.track.path, @"c.mp3");
 }
 
-static NSArray *GLTitles(NSArray *entries) {
-    NSMutableArray *titles = [NSMutableArray array];
-    for (GLQueueEntry *entry in entries) [titles addObject:entry.track.title];
-    return titles;
+GL_TEST(test_queue_drops_the_files_that_are_gone_from_its_state) {
+    GLPlayQueue *queue = [GLPlayQueue new];
+    [queue setTracks:GLTracks(@[ @"a", @"gone1", @"b", @"gone2", @"c" ]) currentIndex:2];
+    GLPlayQueue *copy = [GLPlayQueue queueWithState:queue.state lookup:GLLookup];
+    GL_EQUAL(GLTitles(copy.entries), (@[ @"a", @"b", @"c" ]));
+    GL_EQUAL(copy.currentEntry.track.title, @"b");
 }
 
 GL_TEST(test_queue_repeats_all_and_one) {
@@ -111,12 +128,12 @@ GL_TEST(test_queue_moves_and_removes_entries_and_keeps_the_current_one) {
     GL_EQUAL_INT(queue.index, 1);
 }
 
-GL_TEST(test_queue_keeps_shuffle_and_repeat_in_an_archive) {
+GL_TEST(test_queue_keeps_shuffle_and_repeat_in_its_state) {
     GLPlayQueue *queue = [GLPlayQueue new];
     queue.repeat = GLRepeatAll;
     queue.shuffle = YES;
     [queue setTracks:GLTracks(@[ @"a", @"b", @"c" ]) currentIndex:1];
-    GLPlayQueue *copy = [NSKeyedUnarchiver unarchiveObjectWithData:[NSKeyedArchiver archivedDataWithRootObject:queue]];
+    GLPlayQueue *copy = [GLPlayQueue queueWithState:queue.state lookup:GLLookup];
     GL_EXPECT(copy.shuffle);
     GL_EQUAL_INT(copy.repeat, GLRepeatAll);
     copy.shuffle = NO;

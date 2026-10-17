@@ -12,15 +12,6 @@
     return entry;
 }
 
-- (instancetype)initWithCoder:(NSCoder *)coder {
-    if ((self = [super init])) _track = [coder decodeObjectForKey:@"track"];
-    return self;
-}
-
-- (void)encodeWithCoder:(NSCoder *)coder {
-    [coder encodeObject:self.track forKey:@"track"];
-}
-
 @end
 
 @interface GLPlayQueue ()
@@ -161,25 +152,47 @@
     self.index = NSNotFound;
 }
 
-- (instancetype)initWithCoder:(NSCoder *)coder {
-    if ((self = [self init])) {
-        [_list addObjectsFromArray:[coder decodeObjectForKey:@"entries"] ?: @[]];
-        NSArray *source = [coder decodeObjectForKey:@"source"];
-        _sourceOrder = source ? [source mutableCopy] : [_list mutableCopy];
-        NSInteger index = [coder decodeIntegerForKey:@"index"];
-        _index = index >= 0 && (NSUInteger)index < _list.count ? (NSUInteger)index : (_list.count ? 0 : NSNotFound);
-        _shuffle = [coder decodeBoolForKey:@"shuffle"];
-        _repeat = [coder decodeIntegerForKey:@"repeat"];
+- (NSDictionary *)state {
+    NSMutableArray *paths = [NSMutableArray arrayWithCapacity:self.list.count];
+    for (GLQueueEntry *entry in self.list) [paths addObject:entry.track.path ?: @""];
+    NSMutableArray *source = [NSMutableArray arrayWithCapacity:self.sourceOrder.count];
+    for (GLQueueEntry *entry in self.sourceOrder) {
+        NSUInteger place = [self.list indexOfObjectIdenticalTo:entry];
+        if (place != NSNotFound) [source addObject:@(place)];
     }
-    return self;
+    return @{
+        @"paths": paths, @"source": source, @"index": @(self.index == NSNotFound ? -1 : (NSInteger)self.index),
+        @"shuffle": @(self.shuffle), @"repeat": @(self.repeat),
+    };
 }
 
-- (void)encodeWithCoder:(NSCoder *)coder {
-    [coder encodeObject:self.list forKey:@"entries"];
-    [coder encodeObject:self.sourceOrder forKey:@"source"];
-    [coder encodeInteger:self.index == NSNotFound ? -1 : (NSInteger)self.index forKey:@"index"];
-    [coder encodeBool:self.shuffle forKey:@"shuffle"];
-    [coder encodeInteger:self.repeat forKey:@"repeat"];
++ (instancetype)queueWithState:(NSDictionary *)state lookup:(GLTrack *(^)(NSString *path))lookup {
+    GLPlayQueue *queue = [GLPlayQueue new];
+    NSArray *paths = state[@"paths"];
+    NSInteger index = [state[@"index"] integerValue];
+    // The new place of each old place. A file that is gone has no place.
+    NSMutableArray *places = [NSMutableArray arrayWithCapacity:paths.count];
+    GLQueueEntry *current = nil;
+    for (NSUInteger i = 0; i < paths.count; i++) {
+        GLTrack *track = lookup(paths[i]);
+        if (!track) {
+            [places addObject:[NSNull null]];
+            continue;
+        }
+        GLQueueEntry *entry = [GLQueueEntry entryWithTrack:track];
+        [places addObject:entry];
+        [queue.list addObject:entry];
+        if ((NSInteger)i == index) current = entry;
+    }
+    for (NSNumber *place in state[@"source"]) {
+        id entry = place.unsignedIntegerValue < places.count ? places[place.unsignedIntegerValue] : nil;
+        if ([entry isKindOfClass:[GLQueueEntry class]]) [queue.sourceOrder addObject:entry];
+    }
+    if (queue.sourceOrder.count != queue.list.count) queue.sourceOrder = [queue.list mutableCopy];
+    queue->_shuffle = [state[@"shuffle"] boolValue];
+    queue->_repeat = [state[@"repeat"] integerValue];
+    queue.index = current ? [queue.list indexOfObjectIdenticalTo:current] : (queue.list.count ? 0 : NSNotFound);
+    return queue;
 }
 
 @end
