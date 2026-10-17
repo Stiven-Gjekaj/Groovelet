@@ -8,7 +8,7 @@ set -e
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 OUT="$ROOT/build/samples/Samples"
-rm -rf "$OUT"
+rm -rf "$ROOT/build/samples"
 mkdir -p "$OUT"
 F="ffmpeg -hide_banner -loglevel error -y"
 
@@ -22,9 +22,21 @@ make() {
 }
 
 mkdir -p "$OUT/Tones" "$OUT/Formats" "$OUT/Gapless"
+
+# The art: a test picture in the MP3 files of Tones, and cover.jpg in the
+# folder of Formats.
+ART="$ROOT/build/samples/art.jpg"
+$F -f lavfi -i "testsrc2=size=600x600" -frames:v 1 "$ART"
+$F -f lavfi -i "mandelbrot=size=500x500" -frames:v 1 "$OUT/Formats/cover.jpg"
+# add_art FILE: puts the test picture into FILE.
+add_art() {
+    $F -i "$1" -i "$ART" -map 0:a -map 1:v -c copy -id3v2_version 3 -disposition:v attached_pic "$1.tmp.mp3"
+    mv "$1.tmp.mp3" "$1"
+}
 make "Tones/01 Low.mp3" 20 220 "Low" "The Tones" "First Tones" 1 -c:a libmp3lame -b:a 192k
 make "Tones/02 Middle.mp3" 20 440 "Middle" "The Tones" "First Tones" 2 -c:a libmp3lame -b:a 192k
 make "Tones/03 High.mp3" 20 880 "High" "The Tones" "First Tones" 3 -c:a libmp3lame -b:a 192k
+for file in "$OUT"/Tones/*.mp3; do add_art "$file"; done
 make "Formats/AAC.m4a" 15 330 "AAC" "Format Band" "Formats" 1 -c:a aac -b:a 128k
 make "Formats/ALAC.m4a" 15 350 "ALAC" "Format Band" "Formats" 2 -c:a alac
 make "Formats/WAV.wav" 15 370 "WAV" "Format Band" "Formats" 3
