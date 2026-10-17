@@ -1,6 +1,9 @@
 #import "GLFoldersViewController.h"
+#import "GLDelete.h"
 #import "GLFormat.h"
 #import "GLLibrary.h"
+#import "GLLog.h"
+#import "GLPaths.h"
 #import "GLPlayback.h"
 
 @interface GLFoldersViewController ()
@@ -56,6 +59,39 @@
 
 - (NSString *)emptyText {
     return @"This folder holds no music.";
+}
+
+- (NSString *)pathOfFolder:(NSString *)name {
+    return self.folder.length ? [self.folder stringByAppendingPathComponent:name] : name;
+}
+
+- (NSArray *)tracksForItem:(id)item {
+    if (![item isKindOfClass:[NSString class]]) return [super tracksForItem:item];
+    // All tracks in the folder and its folders, in the order of the paths.
+    NSString *folder = [self pathOfFolder:item];
+    NSMutableArray *tracks = [NSMutableArray array];
+    NSMutableArray *folders = [NSMutableArray arrayWithObject:folder];
+    while (folders.count) {
+        NSString *next = folders.firstObject;
+        [folders removeObjectAtIndex:0];
+        GLFolderContent *content = [[GLLibrary shared] contentOfFolder:next];
+        [tracks addObjectsFromArray:content.tracks];
+        for (NSString *name in content.folders) [folders addObject:[next stringByAppendingPathComponent:name]];
+    }
+    return tracks;
+}
+
+- (void)deleteItem:(id)item tracks:(NSArray *)tracks {
+    if (![item isKindOfClass:[NSString class]]) {
+        [super deleteItem:item tracks:tracks];
+        return;
+    }
+    NSString *folder = [self pathOfFolder:item];
+    if (!GLDeleteFolder(folder, GLMusicDirectory())) return;
+    NSArray *removed = [[GLLibrary shared] removeFolder:folder];
+    GLLog(@"deleted the folder %@ with %lu files", folder, (unsigned long)removed.count);
+    [[GLPlayback shared] forgetPaths:removed];
+    [[GLLibrary shared] postChange];
 }
 
 - (BOOL)showsCurrentTrack {
