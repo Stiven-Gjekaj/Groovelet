@@ -10,7 +10,8 @@ The plan is in [TODO.md](TODO.md).
 ## Put music on the phone
 
 The music is in `/var/mobile/Media/Groovelet`. Each folder and file there
-shows in the app.
+shows in the app. The app plays MP3, AAC, ALAC, WAV, AIFF, FLAC, Opus, Ogg
+Vorbis, APE, and WavPack.
 
 - **Over USB:** connect the phone, and copy the files into `Groovelet` with
   an AFC tool, for example iFunBox, iMazing, 3uTools, or `afcclient` of
@@ -46,6 +47,8 @@ and links without ARC.
 | `scripts/test.sh` | Runs the tests on the Mac. With `--phone`, it also runs the audio tests on the phone. |
 | `scripts/samples.sh` | Makes sample music in each format and copies it to the phone. |
 | `scripts/icons.sh` | Renders the icon and the launch images. |
+| `scripts/ffmpeg.sh` | Builds the audio decoders of FFmpeg for the phone. `scripts/app.sh` runs it when necessary. |
+| `scripts/fixtures.sh` | Makes the sound files of the FFmpeg tests. |
 
 The phone is at `iphone4s` over a USB iproxy tunnel on port 2222.
 
