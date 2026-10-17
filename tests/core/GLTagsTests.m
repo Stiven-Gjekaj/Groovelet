@@ -190,3 +190,46 @@ GL_TEST(test_tags_read_a_picture_in_vorbis_comments) {
     GL_EXPECT(tags.hasPicture);
     GL_EQUAL(tags.picture, cover);
 }
+
+GL_TEST(test_tags_read_apev2_at_the_end_of_a_wavpack_file) {
+    NSData *cover = GLFakeAudio(250);
+    NSMutableData *pictureValue = [NSMutableData dataWithData:GLBytes(@"cover.jpg")];
+    [pictureValue appendBytes:"\0" length:1];
+    [pictureValue appendData:cover];
+    NSData *ape = GLAPETag(@[
+        @[ @"Title", @"Wave" ], @[ @"Artist", [NSString stringWithFormat:@"Packer%COther", (unichar)0] ], @[ @"Album Artist", @"Packers" ], @[ @"Track", @"9/10" ],
+        @[ @"Year", @"2003" ], @[ @"REPLAYGAIN_TRACK_PEAK", @"0.5" ], @[ @"Cover Art (Front)", pictureValue ],
+    ]);
+    NSMutableData *head = [NSMutableData dataWithData:GLBytes(@"wvpk")];
+    [head appendData:GLFakeAudio(400)];
+    NSString *path = GLWriteFile(@"a.wv", @[ head, ape ]);
+    GLTags *tags = GLReadTags(path, YES);
+    GL_EQUAL(tags.title, @"Wave");
+    GL_EQUAL(tags.artist, @"Packer");
+    GL_EQUAL(tags.albumArtist, @"Packers");
+    GL_EQUAL_INT(tags.trackNumber, 9);
+    GL_EQUAL_INT(tags.year, 2003);
+    GL_EXPECT(fabs(tags.trackPeak - 0.5) < 1e-9);
+    GL_EQUAL(tags.picture, cover);
+}
+
+GL_TEST(test_tags_use_id3v1_only_for_the_empty_fields) {
+    NSData *id3 = GLID3Tag(@[ GLID3TextFrame(@"TIT2", @"New title", 0, 3) ], 3, 0);
+    NSData *v1 = GLID3v1Tag(@"Old title", @"Old artist", @"Old album", @"1988", 5);
+    GLTags *tags = GLReadTags(GLWriteFile(@"a.mp3", @[ id3, GLFakeAudio(900), v1 ]), NO);
+    GL_EQUAL(tags.title, @"New title");
+    GL_EQUAL(tags.artist, @"Old artist");
+    GL_EQUAL(tags.album, @"Old album");
+    GL_EQUAL_INT(tags.year, 1988);
+    GL_EQUAL_INT(tags.trackNumber, 5);
+}
+
+GL_TEST(test_tags_read_apev2_before_id3v1) {
+    NSData *ape = GLAPETag(@[ @[ @"Title", @"APE title" ] ]);
+    NSData *v1 = GLID3v1Tag(@"V1 title", @"V1 artist", @"", @"", 0);
+    GLTags *tags = GLReadTags(GLWriteFile(@"a.mp3", @[ GLFakeAudio(900), ape, v1 ]), NO);
+    GL_EQUAL(tags.title, @"APE title");
+    GL_EQUAL(tags.artist, @"V1 artist");
+    GL_EXPECT(tags.album == nil);
+    GL_EQUAL_INT(tags.trackNumber, 0);
+}

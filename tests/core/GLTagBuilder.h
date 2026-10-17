@@ -50,3 +50,9 @@ NSData *GLFLACFile(NSArray *blocks);
 NSData *GLOggFile(NSArray *packets);
 // Base64 with padding, as the comment METADATA_BLOCK_PICTURE holds it.
 NSString *GLBase64Encode(NSData *data);
+
+// An APEv2 tag with a footer. Each item is @[ key, NSString or NSData ].
+// NSData makes a binary item.
+NSData *GLAPETag(NSArray *items);
+// An ID3v1.1 tag of 128 bytes.
+NSData *GLID3v1Tag(NSString *title, NSString *artist, NSString *album, NSString *year, uint8_t track);

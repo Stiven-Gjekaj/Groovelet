@@ -232,3 +232,38 @@ NSString *GLBase64Encode(NSData *data) {
     }
     return text;
 }
+
+NSData *GLAPETag(NSArray *items) {
+    NSMutableData *body = [NSMutableData data];
+    for (NSArray *item in items) {
+        BOOL binary = [item[1] isKindOfClass:[NSData class]];
+        NSData *value = binary ? item[1] : GLBytes(item[1]);
+        [body appendData:GLLittle32Data((uint32_t)value.length)];
+        [body appendData:GLLittle32Data(binary ? 2 : 0)];
+        [body appendData:GLBytes(item[0])];
+        [body appendBytes:"\0" length:1];
+        [body appendData:value];
+    }
+    NSMutableData *footer = [NSMutableData dataWithData:GLBytes(@"APETAGEX")];
+    [footer appendData:GLLittle32Data(2000)];
+    [footer appendData:GLLittle32Data((uint32_t)body.length + 32)];
+    [footer appendData:GLLittle32Data((uint32_t)items.count)];
+    [footer appendData:GLLittle32Data(0)];
+    [footer increaseLengthBy:8];
+    [body appendData:footer];
+    return body;
+}
+
+NSData *GLID3v1Tag(NSString *title, NSString *artist, NSString *album, NSString *year, uint8_t track) {
+    NSMutableData *tag = [NSMutableData dataWithLength:128];
+    uint8_t *t = tag.mutableBytes;
+    memcpy(t, "TAG", 3);
+    NSArray *fields = @[ @[ title, @3, @30 ], @[ artist, @33, @30 ], @[ album, @63, @30 ], @[ year, @93, @4 ] ];
+    for (NSArray *field in fields) {
+        NSData *bytes = [field[0] dataUsingEncoding:NSISOLatin1StringEncoding];
+        memcpy(t + [field[1] intValue], bytes.bytes, MIN(bytes.length, (NSUInteger)[field[2] intValue]));
+    }
+    t[126] = track;
+    t[127] = 255;
+    return tag;
+}

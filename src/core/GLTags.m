@@ -584,6 +584,82 @@ static void GLReadOgg(GLTagFile *file, GLTags *tags, BOOL wantPicture) {
     }
 }
 
+#pragma mark APEv2 and ID3v1
+
+// Reads an APEv2 tag at the end of the file, before an ID3v1 tag.
+static void GLReadAPE(GLTagFile *file, GLTags *tags, BOOL wantPicture) {
+    unsigned long long end = file.size;
+    NSData *v1 = end >= 128 ? [file read:end - 128 length:3] : nil;
+    if (v1 && memcmp(v1.bytes, "TAG", 3) == 0) end -= 128;
+    if (end < 32) return;
+    NSData *footer = [file read:end - 32 length:32];
+    const uint8_t *f = footer.bytes;
+    if (!footer || memcmp(f, "APETAGEX", 8) != 0) return;
+    uint32_t size = GLLittle32(f + 12);
+    uint32_t count = GLLittle32(f + 16);
+    if (size < 32 || size > end || size > 64 * 1024 * 1024) return;
+    unsigned long long start = end - size;
+    unsigned long long p = start;
+    unsigned long long itemsEnd = end - 32;
+    for (uint32_t i = 0; i < count && p + 8 < itemsEnd; i++) {
+        NSData *head = [file read:p length:8];
+        if (!head) return;
+        uint32_t valueSize = GLLittle32(head.bytes);
+        uint32_t flags = GLLittle32((const uint8_t *)head.bytes + 4);
+        p += 8;
+        // The key ends with a zero byte. A key has at most 255 bytes.
+        NSData *keyArea = [file read:p length:(NSUInteger)MIN((unsigned long long)256, itemsEnd - p)];
+        const uint8_t *k = keyArea.bytes;
+        NSUInteger keyLength = 0;
+        while (keyLength < keyArea.length && k[keyLength] != 0) keyLength++;
+        if (keyLength == keyArea.length) return;
+        NSString *key = [[NSString alloc] initWithBytes:k length:keyLength encoding:NSASCIIStringEncoding].lowercaseString;
+        p += keyLength + 1;
+        if (valueSize > itemsEnd - p) return;
+        BOOL binary = ((flags >> 1) & 3) == 1;
+        if ([key hasPrefix:@"cover art"]) {
+            tags.hasPicture = YES;
+            if (wantPicture && binary && (!tags.picture || [key isEqualToString:@"cover art (front)"])) {
+                // The value is a file name, a zero byte, and the picture.
+                NSData *value = [file read:p length:valueSize];
+                const uint8_t *v = value.bytes;
+                NSUInteger name = 0;
+                while (name < value.length && v[name] != 0) name++;
+                if (name + 1 < value.length) {
+                    tags.picture = [value subdataWithRange:NSMakeRange(name + 1, value.length - name - 1)];
+                }
+            }
+        } else if (!binary && valueSize < 64 * 1024) {
+            NSData *value = [file read:p length:valueSize];
+            NSString *text = value ? [[NSString alloc] initWithData:value encoding:NSUTF8StringEncoding] : nil;
+            // A list of values is separated by zero bytes. Keep the first.
+            text = [text componentsSeparatedByString:[NSString stringWithFormat:@"%C", (unichar)0]].firstObject;
+            GLSetField(tags, key, text);
+        }
+        p += valueSize;
+    }
+}
+
+// Reads the old ID3v1 tag in the last 128 bytes. Its fields fill only the
+// fields that are still empty.
+static void GLReadID3v1(GLTagFile *file, GLTags *tags) {
+    if (file.size < 128) return;
+    NSData *tag = [file read:file.size - 128 length:128];
+    const uint8_t *t = tag.bytes;
+    if (!tag || memcmp(t, "TAG", 3) != 0) return;
+    NSString *(^field)(NSUInteger, NSUInteger) = ^NSString *(NSUInteger offset, NSUInteger length) {
+        NSUInteger n = 0;
+        while (n < length && t[offset + n] != 0) n++;
+        return [[NSString alloc] initWithBytes:t + offset length:n encoding:NSISOLatin1StringEncoding];
+    };
+    GLSetField(tags, @"title", field(3, 30));
+    GLSetField(tags, @"artist", field(33, 30));
+    GLSetField(tags, @"album", field(63, 30));
+    GLSetField(tags, @"year", field(93, 4));
+    // ID3v1.1 keeps the track in the last byte of the comment.
+    if (t[125] == 0 && t[126] != 0 && !tags.trackNumber) tags.trackNumber = t[126];
+}
+
 #pragma mark The reader
 
 GLTags *GLReadTags(NSString *path, BOOL wantPicture) {
@@ -603,5 +679,8 @@ GLTags *GLReadTags(NSString *path, BOOL wantPicture) {
     unsigned long long id3 = GLReadID3v2(file, 0, tags, wantPicture);
     NSData *flac = [file read:id3 length:4];
     if (flac && memcmp(flac.bytes, "fLaC", 4) == 0) GLReadFLAC(file, id3, tags, wantPicture);
+    // MP3, APE, and WavPack files can have tags at the end.
+    GLReadAPE(file, tags, wantPicture);
+    GLReadID3v1(file, tags);
     return tags;
 }
