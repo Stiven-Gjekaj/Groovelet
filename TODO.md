@@ -32,7 +32,7 @@ for each choice is in [docs/decisions.md](docs/decisions.md).
 - Add the queue, shuffle, and repeat.
 - Resume the position and the queue after a restart.
 
-## 0.5: getting files in
+## 0.5: getting files in (done, 2026-10-17)
 
 - Add the Wi-Fi upload page.
 - Add "Open in Groovelet".
