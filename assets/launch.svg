@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 480" width="320" height="480">
+  <!-- The launch image: a near-black screen with the mark in the middle.
+       The status bar is on top of the first 20 pixels. -->
+  <rect width="320" height="480" fill="#111111"/>
+  <!-- The mark of assets/brand/mark.svg at 96 of 512 pixels. -->
+  <g transform="translate(112 202) scale(0.1875)">
+    <circle cx="256" cy="256" r="236" fill="#151515"/>
+    <circle cx="256" cy="256" r="234" fill="none" stroke="#3A3A3A" stroke-width="4"/>
+    <circle cx="256" cy="256" r="192" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <circle cx="256" cy="256" r="206" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <circle cx="256" cy="256" r="220" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <circle cx="256" cy="256" r="96" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <circle cx="256" cy="256" r="110" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <path d="M368.21 154.96 A151 151 0 1 0 407 256 H300" fill="none" stroke="#FF6B4A" stroke-width="48"/>
+    <circle cx="256" cy="256" r="18" fill="#F5F1EC"/>
+  </g>
+</svg>
