@@ -21,14 +21,22 @@ enum { GLBufferCount = 4, GLBufferFrames = 8192 };
 @property (nonatomic, strong) NSMapTable *paths;
 @property (nonatomic) BOOL interrupted;
 @property (nonatomic) NSUInteger nextToken;
+// The start frame of the play that the clock last saw.
+@property (nonatomic) int64_t currentStartFrame;
+// The buffers that came back with no sound to fill, at the end of the
+// stream. A next track that comes late fills them again.
+@property (nonatomic, strong) NSMutableArray *idleBuffers;
+@end
+
+@interface GLAudioPlayer (Fill)
+- (void)fillBuffer:(AudioQueueBufferRef)buffer queue:(AudioQueueRef)queue;
 @end
 
 static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef buffer) {
-    GLRenderer *renderer = (__bridge GLRenderer *)context;
-    NSUInteger frames = [renderer renderInto:buffer->mAudioData frames:GLBufferFrames];
-    if (frames == 0) return;  // The end. The buffer stays out of the queue.
-    buffer->mAudioDataByteSize = (UInt32)(frames * GLOutputChannels * sizeof(int16_t));
-    AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
+    // The thread of the AudioQueue has no autorelease pool.
+    @autoreleasepool {
+        [(__bridge GLAudioPlayer *)context fillBuffer:buffer queue:queue];
+    }
 }
 
 @implementation GLAudioPlayer
@@ -39,6 +47,7 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
         _openQueue = dispatch_queue_create("GLAudioPlayer.open", DISPATCH_QUEUE_SERIAL);
         _durations = [NSMapTable strongToStrongObjectsMapTable];
         _paths = [NSMapTable strongToStrongObjectsMapTable];
+        _idleBuffers = [NSMutableArray array];
         _volume = 1;
         AVAudioSession *session = [AVAudioSession sharedInstance];
         [session setCategory:AVAudioSessionCategoryPlayback error:NULL];
@@ -58,6 +67,30 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
 }
 
 #pragma mark The queue
+
+// Called on the thread of the AudioQueue.
+- (void)fillBuffer:(AudioQueueBufferRef)buffer queue:(AudioQueueRef)queue {
+    NSUInteger frames = [self.renderer renderInto:buffer->mAudioData frames:GLBufferFrames];
+    if (frames == 0) {
+        // The end. The buffer stays out of the queue until a next track comes.
+        @synchronized (self.idleBuffers) {
+            [self.idleBuffers addObject:[NSValue valueWithPointer:buffer]];
+        }
+        return;
+    }
+    buffer->mAudioDataByteSize = (UInt32)(frames * GLOutputChannels * sizeof(int16_t));
+    AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
+}
+
+// Fills the idle buffers again, after a next track came late.
+- (void)refillIdleBuffers {
+    NSArray *buffers;
+    @synchronized (self.idleBuffers) {
+        buffers = [self.idleBuffers copy];
+        [self.idleBuffers removeAllObjects];
+    }
+    for (NSValue *value in buffers) [self fillBuffer:value.pointerValue queue:self.queue];
+}
 
 - (void)disposeQueue {
     if (!self.queue) return;
@@ -79,16 +112,21 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
     format.mFramesPerPacket = 1;
     format.mBytesPerPacket = format.mBytesPerFrame;
     AudioQueueRef queue = NULL;
-    if (AudioQueueNewOutput(&format, GLFillBuffer, (__bridge void *)self.renderer, NULL, NULL, 0, &queue) != noErr) {
+    // The queue keeps a plain pointer to the player. The player disposes of
+    // the queue before it goes away.
+    if (AudioQueueNewOutput(&format, GLFillBuffer, (__bridge void *)self, NULL, NULL, 0, &queue) != noErr) {
         return NO;
     }
     AudioQueueSetParameter(queue, kAudioQueueParam_Volume, self.volume);
+    @synchronized (self.idleBuffers) {
+        [self.idleBuffers removeAllObjects];
+    }
+    self.queue = queue;
     for (int i = 0; i < GLBufferCount; i++) {
         AudioQueueBufferRef buffer = NULL;
         if (AudioQueueAllocateBuffer(queue, GLBufferFrames * format.mBytesPerFrame, &buffer) != noErr) break;
-        GLFillBuffer((__bridge void *)self.renderer, queue, buffer);
+        [self fillBuffer:buffer queue:queue];
     }
-    self.queue = queue;
     return YES;
 }
 
@@ -118,6 +156,7 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
     [self.renderer setNextItem:nil decoder:nil];
     [self.renderer startItem:item decoder:decoder atTime:seconds];
     self.currentItem = item;
+    self.currentStartFrame = 0;
     self.currentTime = seconds;
     self.duration = decoder.duration;
     if (![self makeQueue]) return NO;
@@ -148,6 +187,7 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
             [self.durations setObject:@(decoder.duration) forKey:item];
             [self.paths setObject:path forKey:item];
             [self.renderer setNextItem:item decoder:decoder];
+            if (self.queue) [self refillIdleBuffers];
         });
     });
 }
@@ -183,6 +223,7 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
         return;
     }
     self.currentTime = seconds;
+    self.currentStartFrame = 0;
     self.playing = NO;
     if (![self makeQueue]) return;
     if (wasPlaying) [self startQueue];
@@ -211,7 +252,8 @@ static void GLFillBuffer(void *context, AudioQueueRef queue, AudioQueueBufferRef
     int64_t frame = [self playedFrame];
     if (frame < 0) return;
     GLRendererPosition *position = [self.renderer positionAtFrame:frame];
-    if (position.item && position.item != self.currentItem) {
+    if (position.item && (position.item != self.currentItem || position.startFrame != self.currentStartFrame)) {
+        self.currentStartFrame = position.startFrame;
         self.currentItem = position.item;
         self.duration = [[self.durations objectForKey:position.item] doubleValue];
         self.currentTime = position.time;

@@ -95,3 +95,23 @@ GL_TEST(test_player_keeps_its_place_while_paused) {
     GL_EXPECT(!player.playing);
     [player stop];
 }
+
+GL_TEST(test_player_starts_an_item_again_for_repeat_one) {
+    NSString *path = GLWave(GLTestTemporaryDirectory(), @"a.wav", 0.6);
+    GLAudioPlayer *player = [GLAudioPlayer new];
+    player.volume = 0;
+    GLPlayerRecorder *recorder = [GLPlayerRecorder new];
+    __weak GLAudioPlayer *weakPlayer = player;
+    __block int plays = 0;
+    recorder.onStart = ^(id item) {
+        if (++plays < 3) [weakPlayer setNextItem:item path:path];
+    };
+    player.delegate = recorder;
+    GL_EXPECT([player playItem:@"a" path:path atTime:0 paused:NO]);
+    NSDate *start = [NSDate date];
+    while (!recorder.finished && [start timeIntervalSinceNow] > -5) {
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.05]];
+    }
+    GL_EXPECT(recorder.finished);
+    GL_EQUAL(recorder.started, (@[ @"a", @"a", @"a" ]));
+}
