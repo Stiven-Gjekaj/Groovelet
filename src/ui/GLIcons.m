@@ -104,9 +104,13 @@ UIImage *GLIconImage(GLIcon icon, CGFloat size, UIColor *color) {
 }
 
 UIImage *GLThumbImage(CGFloat diameter, UIColor *color) {
+    return GLThumbImageWithOffset(diameter, color, 0);
+}
+
+UIImage *GLThumbImageWithOffset(CGFloat diameter, UIColor *color, CGFloat dy) {
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(diameter + 8, diameter + 8), NO, 0);
     [color setFill];
-    [[UIBezierPath bezierPathWithOvalInRect:CGRectMake(4, 4, diameter, diameter)] fill];
+    [[UIBezierPath bezierPathWithOvalInRect:CGRectMake(4, 4 + dy, diameter, diameter)] fill];
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return image;

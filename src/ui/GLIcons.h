@@ -20,5 +20,7 @@ UIImage *GLIconImage(GLIcon icon, CGFloat size, UIColor *color);
 
 // A round thumb for the sliders.
 UIImage *GLThumbImage(CGFloat diameter, UIColor *color);
+// A round thumb whose circle is `dy` points away from the middle of its image.
+UIImage *GLThumbImageWithOffset(CGFloat diameter, UIColor *color, CGFloat dy);
 // A thin bar for the track of a slider.
 UIImage *GLBarImage(UIColor *color);
