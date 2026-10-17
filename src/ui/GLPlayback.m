@@ -295,10 +295,11 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
     // own file.
     if (self.queueChanged) {
         self.queueChanged = NO;
-        NSDictionary *state = self.queue.state;
+        GLPlayQueue *copy = [self.queue copy];
         NSString *path = [self queuePath];
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-            NSData *data = [NSPropertyListSerialization dataWithPropertyList:state format:NSPropertyListBinaryFormat_v1_0
+            NSData *data = [NSPropertyListSerialization dataWithPropertyList:copy.state
+                                                                      format:NSPropertyListBinaryFormat_v1_0
                                                                      options:0 error:NULL];
             [data writeToFile:path atomically:YES];
         });
