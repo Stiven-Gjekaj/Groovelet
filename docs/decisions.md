@@ -93,6 +93,23 @@ Each entry gives the reason. The owner made these choices on 2026-10-17.
   A test on the iPhone 4S (2026-10-17) decoded 3 seconds of AAC from
   ExtAudioFile as exactly 132300 frames.
 
+- **Shuffle keeps the played tracks** (0.4). It puts only the tracks after
+  the current track in a random order. When shuffle goes off, the queue
+  goes back to the order of the source.
+- **Repeat one plays the same entry again.** The renderer gives each play of
+  an item its own start frame, so the player sees a new start.
+- **A next track can come after the end of the stream.** A track that is
+  shorter than the buffers (0.74 seconds) ends before the player knows the
+  next track. The renderer then continues with the next track, and the
+  player fills the buffers that came back empty.
+- **The queue and the place stay in two property lists** in the support
+  directory: `queue.plist` with the paths, and `place.plist` with the place.
+  A keyed archive of 10000 tracks is slow on the A5 chip. With 10000
+  entries on the iPhone 4S (2026-10-17), the save took 0.27 seconds away
+  from the main thread, and the restore 0.96 seconds at the start, also
+  away from the main thread. The app saves on each new track, at a pause,
+  when it goes to the back, and each 15 seconds during play.
+
 Version 1.0 has these features:
 
 - a queue with "play next" and "add to queue"
