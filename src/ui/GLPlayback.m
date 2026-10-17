@@ -15,6 +15,9 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 @property (nonatomic, strong) NSTimer *saveTimer;
 @property (nonatomic, strong) MPMediaItemArtwork *artwork;
 @property (nonatomic, copy) NSString *artworkKey;
+// YES while the player starts an entry because of a command, not because the
+// track before it ended.
+@property (nonatomic) BOOL manualStart;
 @end
 
 @implementation GLPlayback
@@ -74,7 +77,29 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 
 #pragma mark The queue
 
+#pragma mark Play counts
+
+// A play counts when the track ends, or when the owner leaves it after more
+// than half of it.
+- (void)countPlayOfEntry:(GLQueueEntry *)entry {
+    NSString *path = entry.track.path;
+    if (!path) return;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+        [[GLLibrary shared] recordPlayOfPath:path];
+    });
+}
+
+- (void)countCurrentIfMostlyPlayed {
+    double duration = self.duration;
+    if (self.player.currentItem && duration > 0 && self.currentTime >= duration / 2) {
+        [self countPlayOfEntry:self.queue.currentEntry];
+    }
+}
+
+#pragma mark The queue
+
 - (void)playTracks:(NSArray *)tracks startAtIndex:(NSUInteger)index {
+    [self countCurrentIfMostlyPlayed];
     [self.queue setTracks:tracks currentIndex:index];
     self.queueChanged = YES;
     [self startCurrentAtTime:0 paused:NO];
@@ -118,6 +143,7 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 
 - (void)playEntryAtIndex:(NSUInteger)index {
     if (index >= self.queue.entries.count) return;
+    [self countCurrentIfMostlyPlayed];
     [self.queue moveToEntry:self.queue.entries[index]];
     [self startCurrentAtTime:0 paused:NO];
 }
@@ -140,7 +166,10 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
     NSUInteger tries = self.queue.entries.count;
     while (self.queue.currentEntry && tries-- > 0) {
         GLQueueEntry *entry = self.queue.currentEntry;
-        if ([self.player playItem:entry path:GLAbsolutePath(entry.track.path) atTime:seconds paused:paused]) return;
+        self.manualStart = YES;
+        BOOL started = [self.player playItem:entry path:GLAbsolutePath(entry.track.path) atTime:seconds paused:paused];
+        self.manualStart = NO;
+        if (started) return;
         GLLog(@"cannot open %@", entry.track.path);
         GLQueueEntry *next = self.queue.entryForNext;
         if (!next) break;
@@ -176,6 +205,7 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 - (void)next {
     GLQueueEntry *next = self.queue.entryForNext;
     if (!next) return;
+    [self countCurrentIfMostlyPlayed];
     [self.queue moveToEntry:next];
     [self startCurrentAtTime:0 paused:!self.playing];
 }
@@ -186,6 +216,7 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
         [self seekToTime:0];
         return;
     }
+    [self countCurrentIfMostlyPlayed];
     [self.queue moveToEntry:before];
     [self startCurrentAtTime:0 paused:!self.playing];
 }
@@ -211,6 +242,8 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 #pragma mark The audio player
 
 - (void)audioPlayer:(GLAudioPlayer *)player didStartItem:(id)item {
+    // The track before this one played to its end.
+    if (!self.manualStart) [self countPlayOfEntry:self.queue.currentEntry];
     [self.queue moveToEntry:item];
     GLLog(@"start %@ at %.2f", ((GLQueueEntry *)item).track.path, player.currentTime);
     [self prepareNext];
@@ -220,6 +253,7 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 
 - (void)audioPlayerDidFinish:(GLAudioPlayer *)player {
     GLLog(@"the queue ended");
+    [self countPlayOfEntry:self.queue.currentEntry];
     // Go back to the first track of the queue, and wait.
     GLQueueEntry *first = self.queue.entries.firstObject;
     if (first) {
