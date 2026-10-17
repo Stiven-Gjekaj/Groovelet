@@ -3,6 +3,7 @@
 #import "GLAlbumsViewController.h"
 #import "GLArtistsViewController.h"
 #import "GLDecoders.h"
+#import "GLImport.h"
 #import "GLLibrary.h"
 #import "GLLibraryUpdater.h"
 #import "GLLink.h"
@@ -75,6 +76,7 @@
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication
          annotation:(id)annotation {
     GLLog(@"link %@", url);
+    if (url.isFileURL) return [self importFile:url];
     GLLink *link = GLParseLink(url);
     if (!link) return NO;
     GLPlayback *playback = [GLPlayback shared];
@@ -88,6 +90,20 @@
         case GLLinkOpen: [self openScreen:link.name path:link.path]; break;
     }
     return YES;
+}
+
+// Another app opened a file in Groovelet. iOS put it in Documents/Inbox.
+- (BOOL)importFile:(NSURL *)url {
+    NSError *error = nil;
+    NSString *path = GLImportFile(url.path, GLMusicDirectory(), &error);
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:path ? @"Added" : @"Not added"
+                                                    message:path ? [NSString stringWithFormat:@"%@ is in Imported.",
+                                                                       path.lastPathComponent]
+                                                                 : error.localizedDescription
+                                                   delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+    [alert show];
+    if (path) [[GLLibraryUpdater shared] scan];
+    return path != nil;
 }
 
 // Opens a tab, a screen of More, or the album of a track.
@@ -108,7 +124,7 @@
         [self.tabs showQueue];
         return;
     }
-    if ([name isEqualToString:@"folders"] || [name isEqualToString:@"settings"]) {
+    if ([@[ @"folders", @"upload", @"settings" ] containsObject:name]) {
         self.tabs.selectedIndex = 4;
         [self.more.navigationController popToRootViewControllerAnimated:NO];
         [self.more openScreen:name];
