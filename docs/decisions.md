@@ -70,6 +70,13 @@ Each entry gives the reason. The owner made these choices on 2026-10-17.
   FFmpeg 7.1, LGPL only, with only the audio decoders and demuxers. It ships
   as a dylib inside the app, so that the MIT licence of the app stays clean.
 - **Hi-res files are resampled** to the rate of the output.
+- **The FFmpeg build holds only audio** (0.2, 2026-10-17). It has the
+  demuxers flac, ogg, ape, wv, and matroska, the decoders flac, opus, vorbis,
+  ape, and wavpack, and libswresample. The dylib is 1.6 MB. It has no
+  network and no zlib. `scripts/ffmpeg.sh` keeps the fix of the `movrelx`
+  macro from ZettaLite, because the new Apple linker stops without it.
+- **A seek in FFmpeg is exact.** The demuxer lands on a packet before the
+  target. The decoder drops the frames before the target.
 - **Both decoders feed one audio output**, so all formats act the same.
   Gapless play and ReplayGain need this. The app cannot use `AVPlayer` for
   this reason.
@@ -180,6 +187,28 @@ These are measured on the iPhone 4S with the tools in `probe/`.
 - The art thumbnails are made at the size of the cell and kept on disk.
 - During play, the CPU use is less than 5% for MP3 and AAC, and less than
   10% for FLAC.
+
+## Measured speed
+
+`probe/cpu.m` measured the CPU use on the iPhone 4S during play
+(2026-10-17). The value is the share of one core, over 8 seconds.
+
+| File | Groovelet | mediaserverd |
+| --- | --- | --- |
+| MP3, 192 kbit/s | 2.1% | 6.3% |
+| AAC, 128 kbit/s | 1.6% | 6.3% |
+| FLAC, 44.1 kHz | 1.5% | 6.3% |
+| FLAC, 96 kHz, 24-bit | 5.3% | 6.3% |
+| Opus, 48 kHz | 6.2% | 6.2% |
+
+The targets were less than 5% for MP3 and AAC, and less than 10% for FLAC.
+mediaserverd mixes the sound for all apps. Its share does not change with
+the format. The resampler causes the most cost, for 96 kHz and for the
+48 kHz of Opus.
+
+On iOS 6, `proc_pidinfo` gives the CPU time in Mach ticks, not in
+nanoseconds. A busy loop showed 2.4% before the probe changed the ticks
+into seconds.
 
 ## Toolchain
 
