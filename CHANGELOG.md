@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 (2026-10-17)
+
+- ReplayGain from the tags, for each track or each album, in Settings.
+- The sleep timer on the player screen: 15, 30, or 45 minutes, 1 hour, or
+  the end of the track.
+- Delete a track, an album, or a folder from the phone, from the menu of a
+  long press.
+
 ## 0.6.0 (2026-10-17)
 
 - Make playlists in the app. Add tracks or albums from the menu of a long
