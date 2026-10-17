@@ -1,40 +1,97 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
   <!-- Groovelet GitHub social preview, 1280x640.
        The content stays inside the middle area (x 198..1130, y 180..480),
-       because GitHub crops the edges in some places. -->
+       because GitHub crops the edges in some places.
+       The letters are geometric strokes. They do not depend on a font. -->
   <defs>
-    <radialGradient id="bg" cx="640" cy="300" r="620" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#232323"/>
-      <stop offset="1" stop-color="#111111"/>
+    <radialGradient id="bglow" cx="640" cy="320" r="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#262626"/>
+      <stop offset="1" stop-color="#000000"/>
+    </radialGradient>
+    <radialGradient id="lift" cx="318" cy="300" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3C3C3C"/>
+      <stop offset="0.6" stop-color="#3C3C3C" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#3C3C3C" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="1280" height="640" fill="#111111"/>
-  <rect width="1280" height="640" fill="url(#bg)"/>
-  <g transform="translate(220.87 184) scale(0.86)">
-    <g transform="scale(0.39)">
-      <!-- The disc. A thin rim keeps the edge visible on a dark background. -->
-      <circle cx="256" cy="256" r="236" fill="#151515"/>
-      <circle cx="256" cy="256" r="234" fill="none" stroke="#3A3A3A" stroke-width="4"/>
-      <!-- The grooves. Three outer lines and two inner lines. -->
-      <circle cx="256" cy="256" r="192" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
-      <circle cx="256" cy="256" r="206" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
-      <circle cx="256" cy="256" r="220" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
-      <circle cx="256" cy="256" r="96" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
-      <circle cx="256" cy="256" r="110" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
-      <!-- The coral groove. It reads as the G of Groovelet. -->
-      <path d="M368.21 154.96 A151 151 0 1 0 407 256 H300" fill="none" stroke="#FF6B4A" stroke-width="48" stroke-linecap="butt" stroke-linejoin="miter"/>
-      <!-- The spindle hole. -->
-      <circle cx="256" cy="256" r="18" fill="#F5F1EC"/>
-    </g>
-    <!-- The word Groovelet as geometric strokes. -->
-    <g transform="translate(236 149) scale(0.72)">
-      <path d="M116.08 -116.08 A68 68 0 1 0 136 -68 H70 M180 0 V-100 M180 -55 A45 45 0 0 1 225 -100 M264 -50 A50 50 0 1 1 364 -50 A50 50 0 1 1 264 -50 M396 -50 A50 50 0 1 1 496 -50 A50 50 0 1 1 396 -50 M534 -100 L579 0 L624 -100 M662 -50 H762 A50 50 0 1 0 750.3 -17.86 M800 0 V-136 M838 -50 H938 A50 50 0 1 0 926.3 -17.86 M994 -130 V-30 A30 30 0 0 0 1024 0 M976 -100 H1026" fill="none" stroke="#F5F1EC" stroke-width="22" stroke-linecap="butt" stroke-linejoin="miter"/>
-    </g>
+  <rect width="1280" height="640" fill="#000000"/>
+  <rect width="1280" height="640" fill="url(#bglow)"/>
+  <!-- A soft light behind the mark, so the disc shows on the black. -->
+  <circle cx="318" cy="300" r="200" fill="url(#lift)"/>
+  <!-- Faint grooves over the whole banner, centred on the mark. -->
+  <circle cx="318" cy="300" r="150" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="174" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="198" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="222" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="246" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="270" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="294" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="318" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="342" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="366" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="390" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="414" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="438" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="462" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="486" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="510" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="534" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="558" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="582" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="606" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="630" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="654" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="678" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="702" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="726" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="750" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="774" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="798" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="822" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="846" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="870" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="894" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="918" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="942" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="966" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="990" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="1014" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="1038" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="1062" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="1086" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <circle cx="318" cy="300" r="1110" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="2"/>
+  <!-- The mark, 240 pixels, at the left. -->
+  <g transform="translate(198 180) scale(0.47)">
+    <!-- The disc. A thin rim keeps the edge visible on a dark background. -->
+    <circle cx="256" cy="256" r="236" fill="#151515"/>
+    <circle cx="256" cy="256" r="234" fill="none" stroke="#3A3A3A" stroke-width="4"/>
+    <!-- The grooves. Three outer lines and two inner lines. -->
+    <circle cx="256" cy="256" r="192" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <circle cx="256" cy="256" r="206" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <circle cx="256" cy="256" r="220" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <circle cx="256" cy="256" r="96" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <circle cx="256" cy="256" r="110" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="5"/>
+    <!-- The coral groove. It reads as the G of Groovelet. -->
+    <path d="M368.21 154.96 A151 151 0 1 0 407 256 H300" fill="none" stroke="#FF6B4A" stroke-width="48" stroke-linecap="butt" stroke-linejoin="miter"/>
+    <!-- The spindle hole. -->
+    <circle cx="256" cy="256" r="18" fill="#F5F1EC"/>
   </g>
-  <!-- The line under the logo, as geometric strokes. -->
-  <g transform="translate(257.2 470) scale(0.3)" opacity="0.8">
-    <path d="M0 0 L54 -136 L108 0 M22 -48 H86 M218 0 V-100 M218 -60 A40 40 0 0 1 298 -60 V0 M298 -60 A40 40 0 0 1 378 -60 V0 M422 -100 V-50 A50 50 0 0 0 522 -50 V-100 V0 M632.98 -91.07 A30 25 0 1 0 610 -50 A30 25 0 1 1 587.02 -8.93 M678 0 V-100 M801.36 -85.36 A50 50 0 1 0 801.36 -14.64 M912 40 V-100 M912 -50 A50 50 0 1 1 1012 -50 A50 50 0 1 1 912 -50 M1056 0 V-136 M1094 -50 A50 50 0 1 1 1194 -50 A50 50 0 1 1 1094 -50 M1194 -100 V0 M1232 -100 L1277 0 M1322 -100 L1259 40 M1360 -50 H1460 A50 50 0 1 0 1448.3 -17.86 M1498 0 V-100 M1498 -55 A45 45 0 0 1 1543 -100 M1674 0 V-106 A30 30 0 0 1 1704 -136 M1654 -100 H1704 M1742 -50 A50 50 0 1 1 1842 -50 A50 50 0 1 1 1742 -50 M1880 0 V-100 M1880 -55 A45 45 0 0 1 1925 -100 M2036 0 V-100 M2074 -68 A64 68 0 1 1 2202 -68 A64 68 0 1 1 2074 -68 M2315.58 -123.85 A36 34 0 1 0 2288 -68 A36 34 0 1 1 2260.42 -12.15 M2452 -50 A50 50 0 1 1 2552 -50 A50 50 0 1 1 2452 -50 M2452 -50 A82 88 0 0 1 2536 -136" fill="none" stroke="#F5F1EC" stroke-width="22" stroke-linecap="butt" stroke-linejoin="miter"/>
-    <circle cx="678" cy="-134" r="14" fill="#F5F1EC"/>
-    <circle cx="2036" cy="-134" r="14" fill="#F5F1EC"/>
+  <!-- The name, as geometric strokes. -->
+  <g transform="translate(472 347) scale(0.6)">
+    <path d="M116.08 -116.08 A68 68 0 1 0 136 -68 H70 M180 0 V-100 M180 -55 A45 45 0 0 1 225 -100 M264 -50 A50 50 0 1 1 364 -50 A50 50 0 1 1 264 -50 M396 -50 A50 50 0 1 1 496 -50 A50 50 0 1 1 396 -50 M534 -100 L579 0 L624 -100 M662 -50 H762 A50 50 0 1 0 750.3 -17.86 M800 0 V-136 M838 -50 H938 A50 50 0 1 0 926.3 -17.86 M994 -130 V-30 A30 30 0 0 0 1024 0 M976 -100 H1026" fill="none" stroke="#F5F1EC" stroke-width="22" stroke-linecap="butt" stroke-linejoin="miter"/>
+  </g>
+  <!-- The line under the name. -->
+  <g transform="translate(476 412) scale(0.18)">
+    <path d="M0 0 L54 -136 L108 0 M22 -48 H86 M218 0 V-100 M218 -60 A40 40 0 0 1 298 -60 V0 M298 -60 A40 40 0 0 1 378 -60 V0 M422 -100 V-50 A50 50 0 0 0 522 -50 V-100 V0 M632.98 -91.07 A30 25 0 1 0 610 -50 A30 25 0 1 1 587.02 -8.93 M678 0 V-100 M801.36 -85.36 A50 50 0 1 0 801.36 -14.64 M912 40 V-100 M912 -50 A50 50 0 1 1 1012 -50 A50 50 0 1 1 912 -50 M1056 0 V-136 M1094 -50 A50 50 0 1 1 1194 -50 A50 50 0 1 1 1094 -50 M1194 -100 V0 M1232 -100 L1277 0 M1322 -100 L1259 40 M1360 -50 H1460 A50 50 0 1 0 1448.3 -17.86 M1498 0 V-100 M1498 -55 A45 45 0 0 1 1543 -100 M1674 0 V-106 A30 30 0 0 1 1704 -136 M1654 -100 H1704 M1742 -50 A50 50 0 1 1 1842 -50 A50 50 0 1 1 1742 -50 M1880 0 V-100 M1880 -55 A45 45 0 0 1 1925 -100 M2036 0 V-100 M2074 -68 A64 68 0 1 1 2202 -68 A64 68 0 1 1 2074 -68 M2315.58 -123.85 A36 34 0 1 0 2288 -68 A36 34 0 1 1 2260.42 -12.15 M2452 -50 A50 50 0 1 1 2552 -50 A50 50 0 1 1 2452 -50 M2452 -50 A82 88 0 0 1 2536 -136" fill="none" stroke="#9A9A9A" stroke-width="26" stroke-linecap="butt" stroke-linejoin="miter"/>
+    <circle cx="678" cy="-134" r="14" fill="#9A9A9A"/>
+    <circle cx="2036" cy="-134" r="14" fill="#9A9A9A"/>
+  </g>
+  <!-- The device tag, a coral accent. -->
+  <g transform="translate(476 440)">
+    <rect width="152.75" height="36" rx="5" fill="#FF6B4A"/>
+    <g transform="translate(14 27) scale(0.125)">
+      <path d="M0 0 V-100 M44 0 V-136 H94 A34 34 0 0 1 94 -68 H44 M172 0 V-136 M172 -60 A40 40 0 0 1 252 -60 V0 M290 -50 A50 50 0 1 1 390 -50 A50 50 0 1 1 290 -50 M428 0 V-100 M428 -60 A40 40 0 0 1 508 -60 V0 M546 -50 H646 A50 50 0 1 0 634.3 -17.86 M826 0 V-136 L756 -40 H852 M971.58 -123.85 A36 34 0 1 0 944 -68 A36 34 0 1 1 916.42 -12.15" fill="none" stroke="#111111" stroke-width="24" stroke-linecap="butt" stroke-linejoin="miter"/>
+      <circle cx="0" cy="-134" r="14" fill="#111111"/>
+    </g>
   </g>
 </svg>
