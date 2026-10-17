@@ -1,22 +1,19 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo.svg">
-  <img src="assets/brand/logo-light.svg" alt="Groovelet" width="440">
-</picture>
+![Groovelet](assets/brand/wordmark.svg)
 
 ### A music player for the iPhone 4S on iOS 6
 
 _Native UIKit, gapless, light on the A5 chip_
 
-![iOS 6](https://img.shields.io/badge/ios-6.1-8195af?style=for-the-badge&logo=apple&logoColor=ffffff)
-![armv7](https://img.shields.io/badge/armv7-ff6b4a?style=for-the-badge)
-![Objective-C](https://img.shields.io/badge/objective--c-ef4a3f?style=for-the-badge)
-![FFmpeg](https://img.shields.io/badge/ffmpeg-7.1-3b8a3e?style=for-the-badge)
-![Cydia](https://img.shields.io/badge/cydia-6d83a2?style=for-the-badge)
-[![MIT licence](https://img.shields.io/badge/mit_licence-3a3f47?style=for-the-badge)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/Stiven-Gjekaj/Groovelet?style=for-the-badge&label=release&color=16181c)](https://github.com/Stiven-Gjekaj/Groovelet/releases/latest)
-[![Ko-fi](https://img.shields.io/badge/ko--fi-support_this_project-f26a1b?style=for-the-badge&logo=ko-fi&logoColor=ffffff)](https://ko-fi.com/stivengjekaj)
+![iOS 6](https://img.shields.io/badge/ios_6.1-ffb347?style=for-the-badge&logo=apple&logoColor=111111)
+![armv7](https://img.shields.io/badge/armv7-ff6b4a?style=for-the-badge&logoColor=111111)
+![Objective-C](https://img.shields.io/badge/objective--c-fb7a86?style=for-the-badge&logoColor=111111)
+![FFmpeg](https://img.shields.io/badge/ffmpeg_7.1-f472b6?style=for-the-badge&logo=ffmpeg&logoColor=111111)
+![Cydia](https://img.shields.io/badge/cydia-3a3a3a?style=for-the-badge&logoColor=111111)
+[![MIT licence](https://img.shields.io/badge/mit_licence-fde4ec?style=for-the-badge&logoColor=111111)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/Stiven-Gjekaj/Groovelet?style=for-the-badge&label=release&labelColor=f5f1ec&color=f5f1ec)](https://github.com/Stiven-Gjekaj/Groovelet/releases/latest)
+[![Ko-fi](https://img.shields.io/badge/ko--fi-support_this_project-ffb347?style=for-the-badge&logo=ko-fi&logoColor=111111)](https://ko-fi.com/stivengjekaj)
 
 <p align="center">
   <a href="#overview"><b>Overview</b></a> |
