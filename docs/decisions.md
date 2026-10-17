@@ -123,6 +123,36 @@ lyrics, and scrobbling.
     the title.
   - The app does not read CUE sheets.
 
+- **The app reads the tags with its own reader, `GLTags`** (0.3). It reads
+  ID3v2 (2.2 to 2.4), ID3v1, MP4 atoms, Vorbis comments in FLAC and Ogg,
+  APEv2, and the chunks of WAV and AIFF. It seeks past the bytes of a
+  picture during a scan. A scan that read the art of 10000 files would read
+  gigabytes on the flash of the phone. FFmpeg could read the tags, but only
+  for its own formats, and a file opens slower.
+- **The duration comes from the decoder.** The scan opens each new file with
+  the decoder that plays it. A first scan of 10000 short MP3 files on the
+  iPhone 4S took 103 seconds (2026-10-17). A scan with no change took 7
+  seconds. It walks the directory and compares the size and the date.
+- **Covering indexes make the long lists fast** (0.3). With 10000 tracks on
+  the iPhone 4S (2026-10-17):
+
+  | Query | Before | After |
+  | --- | --- | --- |
+  | All songs, by title | 1.19 s | 0.34 s |
+  | The grid of the albums | 0.56 s | 0.14 s |
+  | The top folder | 0.73 s | 0.24 s |
+
+  SQLite sorted the songs in a temporary table. An index that holds all the
+  columns of the list gives the rows in order. The list of songs reads only
+  the columns that it shows. The folder reads only the paths, and then the
+  full rows of the files in the folder.
+- **The start time** with 10000 tracks (2026-10-17): the full list of songs
+  shows 0.74 seconds after the launch of the app. iOS takes 0.58 seconds more
+  to start the process.
+- **The art of an album changes with its files.** The scan gives the keys of
+  the albums that it changed. The art cache removes their copies, and makes
+  them again when a list asks.
+
 ## Playlists
 
 - The owner makes playlists in the app. A playlist can get tracks, lose
