@@ -56,8 +56,21 @@ Each entry gives the reason. The owner made these choices on 2026-10-17.
     only while the owner watches the screen.
   - The page cannot download or delete files.
   - The index scans the new files when the upload ends.
+  - The page sends one file at a time with `PUT /upload?path=PATH` and the
+    bytes as the body (0.5). A plain PUT needs no multipart parser on the
+    phone. The page shows the progress of each file.
+  - The server writes to `NAME.part`, and gives the file its name at the
+    end. The scan does not see a file that is not complete.
+  - The server takes only audio files, JPEG and PNG images, and M3U
+    playlists. It refuses a path with `..` or a hidden name.
+  - The port is 8080, or a free port when 8080 is in use.
+  - The app scans 3 seconds after the last file, and when the screen closes.
+  - A test on 2026-10-17 sent a WAV file from a browser on the Mac to the
+    iPhone 4S over Wi-Fi, and the page showed the refusal of `../evil.sh`.
 - **"Open in Groovelet"** from Mail, Safari, and other apps
-  (`CFBundleDocumentTypes`).
+  (`CFBundleDocumentTypes`). iOS puts the file in `Documents/Inbox`. The app
+  moves it into `Imported/`. The app declares the types of FLAC, Opus,
+  Vorbis, APE, and WavPack, because iOS 6 does not know them.
 - Files that scp copies into `/var/mobile/Media/Groovelet` also work.
 - **No download from a URL.** It needs the TLS of mbedTLS, because the TLS
   of iOS 6 fails with many servers. ZettaLite shows this.
