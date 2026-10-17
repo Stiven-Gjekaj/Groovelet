@@ -5,7 +5,7 @@
 #import "GLSort.h"
 #import "GLTheme.h"
 
-@interface GLListViewController ()
+@interface GLListViewController () <UIActionSheetDelegate>
 @property (nonatomic, strong) NSArray *items;
 @property (nonatomic, strong) NSArray *visibleItems;
 @property (nonatomic, strong) NSArray *sectionTitles;  // Nil for a flat list
@@ -14,6 +14,7 @@
 @property (nonatomic, strong) UILabel *emptyLabel;
 @property (nonatomic) NSUInteger loadToken;
 @property (nonatomic) BOOL loaded;
+@property (nonatomic, strong) NSArray *menuTracks;
 @end
 
 @implementation GLListViewController
@@ -40,6 +41,8 @@
     self.emptyLabel.numberOfLines = 0;
     self.emptyLabel.hidden = YES;
     [self.tableView addSubview:self.emptyLabel];
+    [self.tableView addGestureRecognizer:[[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                                                      action:@selector(longPress:)]];
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self selector:@selector(reload) name:GLLibraryDidChangeNotification object:nil];
     if ([self showsCurrentTrack]) {
@@ -153,6 +156,35 @@
 
 - (BOOL)showsCurrentTrack {
     return NO;
+}
+
+- (NSArray *)tracksForItem:(id)item {
+    if ([item isKindOfClass:[GLTrack class]]) return @[ item ];
+    if ([item isKindOfClass:[GLAlbum class]]) return [[GLLibrary shared] tracksOfAlbum:[item key]];
+    return nil;
+}
+
+#pragma mark The menu
+
+- (void)longPress:(UILongPressGestureRecognizer *)gesture {
+    if (gesture.state != UIGestureRecognizerStateBegan) return;
+    NSIndexPath *path = [self.tableView indexPathForRowAtPoint:[gesture locationInView:self.tableView]];
+    if (!path) return;
+    id item = self.sections[path.section][path.row];
+    NSArray *tracks = [self tracksForItem:item];
+    if (!tracks.count) return;
+    self.menuTracks = tracks;
+    NSString *title = [item isKindOfClass:[GLTrack class]] ? [item title] : [item valueForKey:@"title"];
+    UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:nil
+                                         destructiveButtonTitle:nil otherButtonTitles:@"Play Next", @"Add to Queue", nil];
+    sheet.cancelButtonIndex = [sheet addButtonWithTitle:@"Cancel"];
+    [sheet showFromTabBar:self.tabBarController.tabBar];
+}
+
+- (void)actionSheet:(UIActionSheet *)sheet clickedButtonAtIndex:(NSInteger)index {
+    if (index == 0) [[GLPlayback shared] playNext:self.menuTracks];
+    if (index == 1) [[GLPlayback shared] addToQueue:self.menuTracks];
+    self.menuTracks = nil;
 }
 
 #pragma mark The table

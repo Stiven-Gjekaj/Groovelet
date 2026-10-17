@@ -1,5 +1,6 @@
 #import "GLAlbumViewController.h"
 #import "GLFormat.h"
+#import "GLIcons.h"
 #import "GLImageLoader.h"
 #import "GLLibrary.h"
 #import "GLPlayback.h"
@@ -67,11 +68,26 @@
     [play setTitleColor:GLBackgroundColor() forState:UIControlStateNormal];
     [play addTarget:self action:@selector(playAll) forControlEvents:UIControlEventTouchUpInside];
     [header addSubview:play];
+    UIButton *shuffle = [UIButton buttonWithType:UIButtonTypeCustom];
+    shuffle.frame = CGRectMake(232, 104, 44, 30);
+    shuffle.layer.cornerRadius = 15;
+    shuffle.layer.borderWidth = 1;
+    shuffle.layer.borderColor = GLSeparatorColor().CGColor;
+    shuffle.backgroundColor = GLSurfaceColor();
+    [shuffle setImage:GLIconImage(GLIconShuffle, 18, GLTextColor()) forState:UIControlStateNormal];
+    [shuffle addTarget:self action:@selector(shuffleAll) forControlEvents:UIControlEventTouchUpInside];
+    [header addSubview:shuffle];
     return header;
 }
 
 - (void)playAll {
-    if (self.visibleItems.count) [[GLPlayback shared] playTracks:self.visibleItems startAtIndex:0];
+    if (!self.visibleItems.count) return;
+    [GLPlayback shared].shuffle = NO;
+    [[GLPlayback shared] playTracks:self.visibleItems startAtIndex:0];
+}
+
+- (void)shuffleAll {
+    [[GLPlayback shared] shuffleTracks:self.visibleItems];
 }
 
 - (NSArray *)loadItems {

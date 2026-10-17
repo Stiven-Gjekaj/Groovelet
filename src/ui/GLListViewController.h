@@ -30,5 +30,9 @@
 - (NSString *)emptyText;
 // YES for a list that loads again when the track that plays changes.
 - (BOOL)showsCurrentTrack;
+// The tracks of an item for the menu of a long press: Play Next and Add to
+// Queue. The default gives a track itself and the tracks of an album. nil
+// gives no menu.
+- (NSArray *)tracksForItem:(id)item;
 
 @end
