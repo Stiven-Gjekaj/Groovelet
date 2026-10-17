@@ -34,5 +34,8 @@
 // Queue, and Add to Playlist. The default gives a track itself and the tracks of an album. nil
 // gives no menu.
 - (NSArray *)tracksForItem:(id)item;
+// Deletes an item from the phone after the owner said yes. The default
+// deletes the files of the tracks.
+- (void)deleteItem:(id)item tracks:(NSArray *)tracks;
 
 @end

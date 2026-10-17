@@ -1,8 +1,11 @@
 #import "GLListViewController.h"
+#import "GLDelete.h"
 #import "GLLibrary.h"
 #import "GLLog.h"
+#import "GLPaths.h"
 #import "GLPlayback.h"
 #import "GLPlaylistPicker.h"
+#import "GLFormat.h"
 #import "GLSort.h"
 #import "GLTheme.h"
 
@@ -16,6 +19,8 @@
 @property (nonatomic) NSUInteger loadToken;
 @property (nonatomic) BOOL loaded;
 @property (nonatomic, strong) NSArray *menuTracks;
+@property (nonatomic, strong) id menuItem;
+@property (nonatomic, strong) UIActionSheet *confirmSheet;
 @end
 
 @implementation GLListViewController
@@ -175,19 +180,53 @@
     NSArray *tracks = [self tracksForItem:item];
     if (!tracks.count) return;
     self.menuTracks = tracks;
-    NSString *title = [item isKindOfClass:[GLTrack class]] ? [item title] : [item valueForKey:@"title"];
-    UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:nil
-                                         destructiveButtonTitle:nil otherButtonTitles:@"Play Next", @"Add to Queue",
-                                                                @"Add to Playlist", nil];
+    self.menuItem = item;
+    UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:[self titleOfItem:item] delegate:self
+                                              cancelButtonTitle:nil destructiveButtonTitle:nil
+                                              otherButtonTitles:@"Play Next", @"Add to Queue", @"Add to Playlist", nil];
+    // A playlist only points to its files. Its menu does not delete them.
+    if (![item isKindOfClass:[GLPlaylist class]]) {
+        sheet.destructiveButtonIndex = [sheet addButtonWithTitle:@"Delete from the Phone"];
+    }
     sheet.cancelButtonIndex = [sheet addButtonWithTitle:@"Cancel"];
     [sheet showFromTabBar:self.tabBarController.tabBar];
 }
 
+- (NSString *)titleOfItem:(id)item {
+    if ([item isKindOfClass:[NSString class]]) return [item lastPathComponent];
+    return [item valueForKey:[item isKindOfClass:[GLPlaylist class]] ? @"name" : @"title"];
+}
+
 - (void)actionSheet:(UIActionSheet *)sheet clickedButtonAtIndex:(NSInteger)index {
+    if (sheet == self.confirmSheet) {
+        self.confirmSheet = nil;
+        if (index == sheet.destructiveButtonIndex) [self deleteItem:self.menuItem tracks:self.menuTracks];
+        self.menuTracks = nil;
+        self.menuItem = nil;
+        return;
+    }
+    if (index == sheet.destructiveButtonIndex) {
+        // The delete cannot be undone. Ask again.
+        NSString *what = GLCountText((NSInteger)self.menuTracks.count, @"file");
+        NSString *title = [NSString stringWithFormat:@"Delete %@ from the phone? This cannot be undone.", what];
+        self.confirmSheet = [[UIActionSheet alloc] initWithTitle:title delegate:self cancelButtonTitle:@"Cancel"
+                                          destructiveButtonTitle:@"Delete" otherButtonTitles:nil];
+        [self.confirmSheet showFromTabBar:self.tabBarController.tabBar];
+        return;
+    }
     if (index == 0) [[GLPlayback shared] playNext:self.menuTracks];
     if (index == 1) [[GLPlayback shared] addToQueue:self.menuTracks];
     if (index == 2) [GLPlaylistPicker addTracks:self.menuTracks fromView:self.tabBarController.view];
     self.menuTracks = nil;
+    self.menuItem = nil;
+}
+
+- (void)deleteItem:(id)item tracks:(NSArray *)tracks {
+    NSArray *deleted = GLDeleteFiles([tracks valueForKey:@"path"], GLMusicDirectory());
+    GLLog(@"deleted %lu files", (unsigned long)deleted.count);
+    [[GLPlayback shared] forgetPaths:deleted];
+    [[GLLibrary shared] removePaths:deleted];
+    [[GLLibrary shared] postChange];
 }
 
 #pragma mark The table
