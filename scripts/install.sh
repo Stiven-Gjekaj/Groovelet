@@ -1,10 +1,11 @@
 #!/bin/sh
 # Build Groovelet.app, copy it to the phone at "ssh iphone4s", and open it.
-# Usage: scripts/install.sh
+# Usage: scripts/install.sh [--debug]
+# With --debug, the app has the debug links of src/ui/GLDebug.h.
 set -e
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-"$ROOT/scripts/app.sh" >/dev/null
+"$ROOT/scripts/app.sh" "$@" >/dev/null
 
 ssh iphone4s 'killall Groovelet >/dev/null 2>&1; rm -rf /Applications/Groovelet.app'
 # The sftp server of the phone cannot make a new directory, so copy with tar.

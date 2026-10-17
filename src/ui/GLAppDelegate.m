@@ -2,6 +2,7 @@
 #import "GLAlbumViewController.h"
 #import "GLAlbumsViewController.h"
 #import "GLArtistsViewController.h"
+#import "GLDebug.h"
 #import "GLDecoders.h"
 #import "GLImport.h"
 #import "GLLibrary.h"
@@ -78,6 +79,7 @@
          annotation:(id)annotation {
     GLLog(@"link %@", url);
     if (url.isFileURL) return [self importFile:url];
+    if (GLHandleDebugLink(url, self.tabs)) return YES;
     GLLink *link = GLParseLink(url);
     if (!link) return NO;
     GLPlayback *playback = [GLPlayback shared];

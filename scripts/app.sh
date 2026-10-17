@@ -1,6 +1,7 @@
 #!/bin/sh
 # Build Groovelet.app into build/.
-# Usage: scripts/app.sh
+# Usage: scripts/app.sh [--debug]
+# With --debug, the app has the debug links of src/ui/GLDebug.h.
 set -e
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -9,11 +10,13 @@ FFMPEG="$ROOT/build/ffmpeg"
 if [ ! -f "$FFMPEG/lib/libglffmpeg.dylib" ]; then
     "$ROOT/scripts/ffmpeg.sh" >/dev/null
 fi
+DEBUG=""
+if [ "$1" = "--debug" ]; then DEBUG="-DGL_DEBUG"; fi
 rm -rf "$APP"
 mkdir -p "$APP"
 
 # shellcheck disable=SC2046
-"$ROOT/build.sh" "$APP/Groovelet" -I"$ROOT/src/core" -I"$ROOT/src/audio" -I"$ROOT/src/ui" -I"$FFMPEG/include" \
+"$ROOT/build.sh" "$APP/Groovelet" $DEBUG -I"$ROOT/src/core" -I"$ROOT/src/audio" -I"$ROOT/src/ui" -I"$FFMPEG/include" \
     $(ls "$ROOT"/src/core/*.m "$ROOT"/src/audio/*.m "$ROOT"/src/ui/*.m 2>/dev/null) \
     "$FFMPEG/lib/libglffmpeg.dylib" -lsqlite3 \
     -framework Foundation -framework UIKit -framework CoreGraphics -framework QuartzCore \
