@@ -78,6 +78,13 @@ static void GLBindText(sqlite3_stmt *statement, int index, NSString *text) {
     else sqlite3_bind_null(statement, index);
 }
 
+// Binds a path in one Unicode form. The file system of iOS keeps the names
+// decomposed ("A" and U+0301). A playlist from a computer has the composed
+// form ("\u00c1"). SQLite compares the bytes, so each path goes in decomposed.
+static void GLBindPath(sqlite3_stmt *statement, int index, NSString *path) {
+    GLBindText(statement, index, path.decomposedStringWithCanonicalMapping);
+}
+
 static void GLBindDouble(sqlite3_stmt *statement, int index, double value) {
     if (isnan(value)) sqlite3_bind_null(statement, index);
     else sqlite3_bind_double(statement, index, value);
@@ -216,7 +223,7 @@ static double GLColumnDouble(sqlite3_stmt *statement, int index) {
 
 // The values of the columns of a track, from "path" on, without the counts.
 static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
-    GLBindText(s, 1, t.path);
+    GLBindPath(s, 1, t.path);
     sqlite3_bind_int64(s, 2, t.fileSize);
     sqlite3_bind_double(s, 3, t.modified);
     GLBindText(s, 4, t.title);
@@ -296,7 +303,7 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
         [self execute:@"BEGIN"];
         sqlite3_stmt *statement = [self prepare:@"DELETE FROM tracks WHERE path = ?"];
         for (NSString *path in paths) {
-            GLBindText(statement, 1, path);
+            GLBindPath(statement, 1, path);
             sqlite3_step(statement);
             sqlite3_reset(statement);
         }
@@ -307,6 +314,7 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
 
 - (NSArray *)removeFolder:(NSString *)folder {
     if (!folder.length) return @[];
+    folder = folder.decomposedStringWithCanonicalMapping;
     __block NSMutableArray *paths = [NSMutableArray array];
     NSString *start = [folder stringByAppendingString:@"/"];
     NSString *end = [folder stringByAppendingString:@"0"];  // The byte after "/".
@@ -421,6 +429,7 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
 }
 
 - (GLFolderContent *)contentOfFolder:(NSString *)folder {
+    folder = folder.decomposedStringWithCanonicalMapping;
     NSString *prefix = folder.length ? [folder stringByAppendingString:@"/"] : @"";
     NSMutableOrderedSet *folders = [NSMutableOrderedSet orderedSet];
     __block NSMutableArray *tracks = [NSMutableArray array];
@@ -443,7 +452,7 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
         sqlite3_finalize(statement);
         // Read the full rows only for the files directly in the folder.
         for (NSString *path in files) {
-            GLTrack *track = [self tracksWhere:@"WHERE path = ?1" bind:^(sqlite3_stmt *s) { GLBindText(s, 1, path); }]
+            GLTrack *track = [self tracksWhere:@"WHERE path = ?1" bind:^(sqlite3_stmt *s) { GLBindPath(s, 1, path); }]
                                  .firstObject;
             if (track) [tracks addObject:track];
         }
@@ -460,7 +469,7 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
     __block GLTrack *track = nil;
     dispatch_sync(self.queue, ^{
         track = [self tracksWhere:@"WHERE path = ?1" bind:^(sqlite3_stmt *statement) {
-            GLBindText(statement, 1, path);
+            GLBindPath(statement, 1, path);
         }].firstObject;
     });
     return track;
@@ -474,7 +483,7 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
         [self execute:@"DELETE FROM playlist_files"];
         sqlite3_stmt *statement = [self prepare:@"INSERT OR IGNORE INTO playlist_files (path) VALUES (?1)"];
         for (NSString *path in paths) {
-            GLBindText(statement, 1, path);
+            GLBindPath(statement, 1, path);
             sqlite3_step(statement);
             sqlite3_reset(statement);
         }
@@ -528,7 +537,7 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
     sqlite3_stmt *statement = [self prepare:[NSString stringWithFormat:@"SELECT %@ FROM tracks WHERE path = ?1",
                                                                        GLTrackColumns]];
     for (NSString *path in paths) {
-        GLBindText(statement, 1, path);
+        GLBindPath(statement, 1, path);
         if (sqlite3_step(statement) == SQLITE_ROW) [tracks addObject:[self trackFromRow:statement]];
         sqlite3_reset(statement);
     }
@@ -629,7 +638,7 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
     for (NSString *path in paths) {
         sqlite3_bind_int64(statement, 1, playlistID);
         sqlite3_bind_int64(statement, 2, position++);
-        GLBindText(statement, 3, path);
+        GLBindPath(statement, 3, path);
         sqlite3_step(statement);
         sqlite3_reset(statement);
     }
@@ -670,7 +679,7 @@ static void GLBindTrack(sqlite3_stmt *s, GLTrack *t) {
         sqlite3_stmt *statement = [self prepare:@"UPDATE tracks SET play_count = play_count + 1, last_played = ?1 "
                                                 @"WHERE path = ?2"];
         sqlite3_bind_double(statement, 1, [NSDate date].timeIntervalSince1970);
-        GLBindText(statement, 2, path);
+        GLBindPath(statement, 2, path);
         sqlite3_step(statement);
         sqlite3_finalize(statement);
     });

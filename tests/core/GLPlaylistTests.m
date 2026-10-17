@@ -81,3 +81,22 @@ GL_TEST(test_automatic_playlists_follow_the_plays_and_the_date) {
     GL_EXPECT([library trackWithPath:@"b.mp3"].lastPlayed > 0);
     GL_EQUAL_INT([library tracksOfPlaylist:GLFind(library, GLPlaylistRecentlyPlayed) musicDirectory:@""].count, 2);
 }
+
+GL_TEST(test_playlist_file_finds_a_name_with_an_accent_in_the_other_unicode_form) {
+    NSString *composed = @"Songs/Mente M\u00c1.mp3";
+    NSString *decomposed = composed.decomposedStringWithCanonicalMapping;
+    GL_EXPECT(![composed isEqualToString:decomposed] || composed.length != decomposed.length);
+    NSString *music = GLTestTemporaryDirectory();
+    [[NSFileManager defaultManager] createDirectoryAtPath:[music stringByAppendingPathComponent:@"Songs"]
+                              withIntermediateDirectories:YES attributes:nil error:NULL];
+    // The playlist has the composed form, as a computer writes it.
+    [[NSString stringWithFormat:@"%@\n", [composed substringFromIndex:6]]
+        writeToFile:[music stringByAppendingPathComponent:@"Songs/list.m3u8"] atomically:YES
+           encoding:NSUTF8StringEncoding error:NULL];
+    // The library has the decomposed form, as the file system of iOS gives it.
+    GLLibrary *library = GLLibraryWithTracks(@[ decomposed ]);
+    [library setPlaylistFiles:@[ @"Songs/list.m3u8" ]];
+    GL_EQUAL_INT([library tracksOfPlaylist:GLFind(library, GLPlaylistFile) musicDirectory:music].count, 1);
+    GL_EXPECT([library trackWithPath:composed] != nil);
+    GL_EQUAL_INT([library contentOfFolder:@"Songs"].tracks.count, 1);
+}
