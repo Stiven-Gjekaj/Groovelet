@@ -25,5 +25,6 @@ cp "$FFMPEG/lib/libglffmpeg.dylib" "$APP/"
 cp "$ROOT/resources/Info.plist" "$APP/Info.plist"
 cp "$ROOT"/resources/*.png "$APP/" 2>/dev/null || true
 cp "$ROOT"/resources/*.ttf "$APP/" 2>/dev/null || true
+cp "$ROOT"/licenses/*.txt "$APP/"
 printf 'APPL????' > "$APP/PkgInfo"
 echo "$APP"
