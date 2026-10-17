@@ -203,10 +203,25 @@ lyrics, and scrobbling.
   leaves it after more than half. The automatic playlists hold at most 100
   tracks.
 
+## ReplayGain and the sleep timer
+
+- **ReplayGain multiplies the samples in a decoder wrapper** (0.7). The
+  factor comes from the album gain or the track gain, with the other as the
+  fallback. The peak of the tag limits the factor, so the sound does not
+  clip. The lists load light tracks with no gain, so the player reads the
+  full row when a track starts. A change of the setting acts from the next
+  track.
+- **The sleep timer** pauses after 15, 30, or 45 minutes, after 1 hour, or at
+  the end of the track. It lowers the volume over 3 seconds first. At the
+  end of the track, the player gets no next track, and it waits at the next
+  track when the sound ends.
+
 ## File management
 
 - The app deletes a track, an album, or a folder from the phone, after a
-  confirmation.
+  second question (0.7). A folder that becomes empty goes too. The music
+  directory itself stays. A delete cannot go out of the music directory. A
+  playlist has no delete in its menu, because it only points to its files.
 - The app does not edit tags, rename files, or move files. A computer does
   that.
 
@@ -279,6 +294,19 @@ the format. The resampler causes the most cost, for 96 kHz and for the
 On iOS 6, `proc_pidinfo` gives the CPU time in Mach ticks, not in
 nanoseconds. A busy loop showed 2.4% before the probe changed the ticks
 into seconds.
+
+## Checks on the phone
+
+The phone has no tool that makes a touch. A debug build
+(`scripts/install.sh --debug`) adds `groovelet://debug` links that run the
+paths of the screens: delete, the playlists, and a scroll test. The scroll
+test moves the visible list at 2000 points each second with a display link,
+and logs the frames. A normal build has no debug links, because another app
+must never delete music through a link.
+
+The scroll test on the iPhone 4S (2026-10-17) with 10014 songs: the list of
+songs and the grid of the albums showed 60 frames each second, with no
+dropped frame.
 
 ## Toolchain
 
