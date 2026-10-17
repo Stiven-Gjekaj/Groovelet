@@ -49,8 +49,32 @@ for each choice is in [docs/decisions.md](docs/decisions.md).
 - Add the sleep timer.
 - Delete tracks, albums, and folders.
 
-## 1.0.0
+## 1.0.0 (done, 2026-10-17)
 
 - Check each feature and each target on the iPhone 4S with iOS 6.1.3.
 - Add the icon and the brand.
-- Release the .deb, and add it to the Cydia repository.
+- Build the .deb, and install it with `dpkg -i`.
+
+## Next
+
+- Publish the release on GitHub with the .deb, and add it to the Cydia
+  repository. This waits for the owner.
+- Upload `assets/brand/banner.png` as the social preview of the repository.
+
+## Hand checks for the owner
+
+The phone has no tool that makes a touch or a sound check. These checks
+need a person:
+
+- The buttons of the headphones, and the pause when they come out.
+- A call during play, and the play after it.
+- AirPlay.
+- "Open in Groovelet" from Mail or Safari.
+- The long press menus: Play Next, Add to Queue, Add to Playlist, Delete.
+- New Playlist, Rename, and Change the Order.
+- The sound of the gapless join in `Samples/Gapless`.
+
+## Known problems
+
+- APE files are not checked on the phone.
+- A file that another app opens in Groovelet is not checked on the phone.
