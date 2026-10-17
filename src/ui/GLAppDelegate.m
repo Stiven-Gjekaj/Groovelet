@@ -100,6 +100,14 @@
         [(UINavigationController *)self.tabs.selectedViewController popToRootViewControllerAnimated:NO];
         return;
     }
+    if ([name isEqualToString:@"player"]) {
+        [self.tabs showPlayer];
+        return;
+    }
+    if ([name isEqualToString:@"queue"]) {
+        [self.tabs showQueue];
+        return;
+    }
     if ([name isEqualToString:@"folders"] || [name isEqualToString:@"settings"]) {
         self.tabs.selectedIndex = 4;
         [self.more.navigationController popToRootViewControllerAnimated:NO];
