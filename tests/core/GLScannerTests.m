@@ -74,3 +74,18 @@ GL_TEST(test_scanner_removes_the_rows_of_deleted_files) {
     GL_EQUAL_INT(result.changedAlbumKeys.count, 1);
     GL_EQUAL([[library allTracks] valueForKey:@"path"], (@[ @"a.mp3" ]));
 }
+
+GL_TEST(test_scanner_gives_the_playlist_files_to_the_library) {
+    NSString *music = GLTestTemporaryDirectory();
+    GLWriteSong(music, @"a.mp3", @"A");
+    [@"a.mp3\n" writeToFile:[music stringByAppendingPathComponent:@"list.m3u"] atomically:YES
+                   encoding:NSUTF8StringEncoding error:NULL];
+    GLLibrary *library = [[GLLibrary alloc] initWithPath:[GLTestTemporaryDirectory() stringByAppendingPathComponent:@"l"]];
+    GLScanner *scanner = GLNewScanner(library, music, NULL);
+    scanner.isPlaylist = ^BOOL(NSString *path) { return [path.pathExtension isEqualToString:@"m3u"]; };
+    GLScanResult *result = [scanner scan];
+    GL_EQUAL_INT(result.total, 1);
+    NSArray *files = [[library playlists] filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"kind == %d",
+                                                                                                       GLPlaylistFile]];
+    GL_EQUAL([files valueForKey:@"path"], (@[ @"list.m3u" ]));
+}

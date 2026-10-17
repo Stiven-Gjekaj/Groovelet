@@ -26,6 +26,10 @@
                         isAudio:(BOOL (^)(NSString *path))isAudio
                        duration:(double (^)(NSString *path))duration;
 
+// Tells which files are playlists. The scan gives their paths to the library.
+// nil keeps the list of playlists as it is.
+@property (nonatomic, copy) BOOL (^isPlaylist)(NSString *path);
+
 // Runs the scan on the calling thread, and posts the change of the library
 // when a row changed.
 - (GLScanResult *)scan;

@@ -32,6 +32,7 @@
     NSMutableDictionary *stamps = [[self.library fileStamps] mutableCopy];
     NSMutableArray *batch = [NSMutableArray array];
     NSMutableSet *changedAlbums = [NSMutableSet set];
+    NSMutableArray *playlists = [NSMutableArray array];
     NSFileManager *files = [NSFileManager new];
     NSDirectoryEnumerator *walk = [files enumeratorAtURL:[NSURL fileURLWithPath:self.directory]
                               includingPropertiesForKeys:@[ NSURLFileSizeKey, NSURLContentModificationDateKey,
@@ -44,8 +45,13 @@
             NSNumber *isDirectory = nil;
             [url getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:NULL];
             NSString *full = url.path.stringByStandardizingPath;
-            if (isDirectory.boolValue || ![full hasPrefix:root] || !self.isAudio(full)) continue;
+            if (isDirectory.boolValue || ![full hasPrefix:root]) continue;
             NSString *path = [full substringFromIndex:root.length];
+            if (self.isPlaylist && self.isPlaylist(full)) {
+                [playlists addObject:path];
+                continue;
+            }
+            if (!self.isAudio(full)) continue;
             NSNumber *size = nil;
             NSDate *date = nil;
             [url getResourceValue:&size forKey:NSURLFileSizeKey error:NULL];
@@ -84,6 +90,7 @@
     }
     [self.library removePaths:stamps.allKeys];
     result.changedAlbumKeys = changedAlbums;
+    if (self.isPlaylist) [self.library setPlaylistFiles:playlists];
     result.removed = stamps.count;
     result.seconds = -[start timeIntervalSinceNow];
     if (result.added || result.changed || result.removed) [self.library postChange];

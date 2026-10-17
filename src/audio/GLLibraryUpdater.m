@@ -42,6 +42,10 @@ NSString *const GLScanDidEndNotification = @"GLScanDidEnd";
         GLScanner *scanner = [[GLScanner alloc] initWithLibrary:[GLLibrary shared] directory:GLMusicDirectory()
             isAudio:^BOOL(NSString *path) { return GLIsAudioPath(path); }
             duration:^double(NSString *path) { return GLOpenDecoder(path, NULL).duration; }];
+        scanner.isPlaylist = ^BOOL(NSString *path) {
+            NSString *extension = path.pathExtension.lowercaseString;
+            return [extension isEqualToString:@"m3u"] || [extension isEqualToString:@"m3u8"];
+        };
         GLScanResult *result = [scanner scan];
         // The art of a changed album is made again when a screen asks for it.
         for (NSString *key in result.changedAlbumKeys) [[GLArtCache shared] removeKey:key];
