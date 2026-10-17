@@ -5,6 +5,8 @@
 #import "GLLibrary.h"
 #import "GLLog.h"
 #import "GLPaths.h"
+#import "GLReplayGain.h"
+#import "GLSettings.h"
 
 NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 
@@ -158,7 +160,16 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
 - (void)prepareNext {
     if (!self.player.currentItem) return;
     GLQueueEntry *next = self.queue.entryAfterCurrent;
-    [self.player setNextItem:next path:next ? GLAbsolutePath(next.track.path) : nil];
+    [self.player setNextItem:next path:next ? GLAbsolutePath(next.track.path) : nil gain:[self gainOfEntry:next]];
+}
+
+// The ReplayGain factor of an entry. The lists load light tracks with no
+// gain, so the gain comes from the full row of the library.
+- (double)gainOfEntry:(GLQueueEntry *)entry {
+    GLReplayGainMode mode = [GLSettings shared].replayGainMode;
+    if (!entry || mode == GLReplayGainOff) return 1;
+    GLTrack *full = [[GLLibrary shared] trackWithPath:entry.track.path];
+    return GLReplayGainFactor(full ?: entry.track, mode);
 }
 
 // Starts the current entry. A file that does not open is skipped.
@@ -167,7 +178,8 @@ NSString *const GLPlaybackDidChangeNotification = @"GLPlaybackDidChange";
     while (self.queue.currentEntry && tries-- > 0) {
         GLQueueEntry *entry = self.queue.currentEntry;
         self.manualStart = YES;
-        BOOL started = [self.player playItem:entry path:GLAbsolutePath(entry.track.path) atTime:seconds paused:paused];
+        BOOL started = [self.player playItem:entry path:GLAbsolutePath(entry.track.path) gain:[self gainOfEntry:entry]
+                                      atTime:seconds paused:paused];
         self.manualStart = NO;
         if (started) return;
         GLLog(@"cannot open %@", entry.track.path);
