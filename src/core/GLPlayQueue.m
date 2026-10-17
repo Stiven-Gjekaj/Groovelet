@@ -146,6 +146,29 @@
     return YES;
 }
 
+- (BOOL)removeEntriesWithPaths:(NSSet *)paths {
+    GLQueueEntry *current = self.currentEntry;
+    BOOL currentGone = current && [paths containsObject:current.track.path];
+    // The first entry after the current one that stays, else the last before it.
+    GLQueueEntry *replacement = nil;
+    if (currentGone) {
+        for (NSUInteger i = self.index + 1; i < self.list.count && !replacement; i++) {
+            if (![paths containsObject:[self.list[i] track].path]) replacement = self.list[i];
+        }
+        for (NSInteger i = (NSInteger)self.index - 1; i >= 0 && !replacement; i--) {
+            if (![paths containsObject:[self.list[(NSUInteger)i] track].path]) replacement = self.list[(NSUInteger)i];
+        }
+    }
+    NSPredicate *stays = [NSPredicate predicateWithBlock:^BOOL(GLQueueEntry *entry, NSDictionary *bindings) {
+        return ![paths containsObject:entry.track.path];
+    }];
+    [self.list filterUsingPredicate:stays];
+    [self.sourceOrder filterUsingPredicate:stays];
+    GLQueueEntry *now = currentGone ? replacement : current;
+    self.index = now ? [self.list indexOfObjectIdenticalTo:now] : NSNotFound;
+    return currentGone;
+}
+
 - (void)clear {
     [self.list removeAllObjects];
     [self.sourceOrder removeAllObjects];

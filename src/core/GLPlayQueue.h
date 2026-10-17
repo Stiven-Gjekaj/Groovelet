@@ -54,6 +54,11 @@ typedef NS_ENUM(NSInteger, GLRepeatMode) {
 // Removes an entry. The current entry cannot be removed.
 - (BOOL)removeEntryAtIndex:(NSUInteger)index;
 
+// Removes each entry whose track has a path in `paths`. When the current entry
+// goes, the first entry after it that stays is current. Returns YES when the
+// current entry went.
+- (BOOL)removeEntriesWithPaths:(NSSet *)paths;
+
 - (void)clear;
 
 // A copy shares the entries, not the lists. Another thread can read the

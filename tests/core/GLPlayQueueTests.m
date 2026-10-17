@@ -151,3 +151,15 @@ GL_TEST(test_queue_copy_does_not_change_with_the_queue) {
     GL_EQUAL_INT(copy.index, 0);
     GL_EXPECT(copy.entries[1] == queue.entries[1]);
 }
+
+GL_TEST(test_queue_removes_deleted_tracks_and_moves_on_from_the_current_one) {
+    GLPlayQueue *queue = [GLPlayQueue new];
+    [queue setTracks:GLTracks(@[ @"a", @"b", @"c", @"d" ]) currentIndex:1];
+    GL_EXPECT(![queue removeEntriesWithPaths:[NSSet setWithObject:@"d.mp3"]]);
+    GL_EQUAL(queue.currentEntry.track.title, @"b");
+    GL_EXPECT(([queue removeEntriesWithPaths:[NSSet setWithObjects:@"b.mp3", @"c.mp3", nil]]));
+    GL_EQUAL(GLTitles(queue.entries), (@[ @"a" ]));
+    GL_EQUAL(queue.currentEntry.track.title, @"a");
+    GL_EXPECT([queue removeEntriesWithPaths:[NSSet setWithObject:@"a.mp3"]]);
+    GL_EQUAL_INT(queue.index, NSNotFound);
+}
