@@ -197,6 +197,11 @@ lyrics, and scrobbling.
   of the rows. A scan gives a new ID to a file that went away and came back.
   A path that has no file now is left out of the list, and stays in the
   playlist for when the file comes back.
+- **The library keeps each path decomposed** (1.0.1, 2026-10-17). The file
+  system of the phone gives "A" and U+0301 for "\u00c1". An M3U file from a
+  computer has "\u00c1". SQLite compares the bytes, so a song with an accent
+  was missing from its playlist. The library changes each path into the
+  decomposed form before it stores or looks up the path.
 - **The scan finds the M3U files.** The app reads an M3U file when the
   owner opens it, so a change to the file shows at once.
 - **A play counts** when the track plays to its end, or when the owner

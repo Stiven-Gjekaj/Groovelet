@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 (not released)
+
+- A song with an accent in its file name now shows in an M3U playlist.
+
 ## 1.0.0 (2026-10-17)
 
 - The checks of all features on the iPhone 4S with iOS 6.1.3.
