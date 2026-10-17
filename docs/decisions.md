@@ -308,6 +308,29 @@ The scroll test on the iPhone 4S (2026-10-17) with 10014 songs: the list of
 songs and the grid of the albums showed 60 frames each second, with no
 dropped frame.
 
+## The checks of 1.0.0
+
+The checks on the iPhone 4S with iOS 6.1.3 (2026-10-17) gave these results:
+
+| Check | Result |
+| --- | --- |
+| MP3, AAC, ALAC, WAV, AIFF, FLAC (also 96 kHz 24-bit), Opus, Vorbis, WavPack | Each one plays. |
+| APE | Not checked on the phone. No APE encoder was at hand to make a file. |
+| Gapless | The second half of a FLAC sweep starts in the same buffer. The log shows no gap. |
+| ReplayGain | A track with -9 dB gets the factor 0.355. |
+| Lock screen | It shows the art, the title, and the artist. Play continues when the phone locks, also into the next track. |
+| Sleep timer | It pauses after the time, with a fade. |
+| Resume | The queue and the place come back after the app is killed. |
+| Wi-Fi upload | A browser on the Mac sent a file to the phone. |
+| Delete | A track, the track that plays, and a folder go away, with their rows. |
+| 10000 tracks | The list of songs shows 0.74 seconds after the launch. The lists scroll at 60 frames each second. |
+| CPU | 1.5% to 6.2% of one core during play. |
+| The .deb | `dpkg -i` installs it, and the app starts and plays. |
+
+These need a person with the phone: the buttons of the headphones, the
+pause when the headphones come out, a call, AirPlay, "Open in" from Mail or
+Safari, the long press menus, and the sound of the gapless join.
+
 ## Toolchain
 
 - The app builds with the iOS 9.3 SDK of Theos and the clang of the current
