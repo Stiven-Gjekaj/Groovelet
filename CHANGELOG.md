@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.1 (not released)
+## 1.0.1 (2026-10-17)
 
 - A song with an accent in its file name now shows in an M3U playlist.
 
