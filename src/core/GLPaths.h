@@ -3,7 +3,7 @@
 #import <Foundation/Foundation.h>
 
 // Documents. iTunes File Sharing shows it. The music is here.
-NSString *GLDocumentsDirectory(void);
+NSString *GLMusicDirectory(void);
 // Library/Application Support/Groovelet. The index and the state are here.
 NSString *GLSupportDirectory(void);
 // Library/Caches/Groovelet. The art thumbnails are here.

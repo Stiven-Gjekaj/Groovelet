@@ -15,7 +15,7 @@ static NSString *GLMakeDirectory(NSString *path) {
     return path;
 }
 
-NSString *GLDocumentsDirectory(void) {
+NSString *GLMusicDirectory(void) {
     return GLMakeDirectory([GLRoot() stringByAppendingPathComponent:@"Documents"]);
 }
 
@@ -28,11 +28,11 @@ NSString *GLCacheDirectory(void) {
 }
 
 NSString *GLAbsolutePath(NSString *relativePath) {
-    return [GLDocumentsDirectory() stringByAppendingPathComponent:relativePath];
+    return [GLMusicDirectory() stringByAppendingPathComponent:relativePath];
 }
 
 NSString *GLRelativePath(NSString *absolutePath) {
-    NSString *root = [GLDocumentsDirectory().stringByStandardizingPath stringByAppendingString:@"/"];
+    NSString *root = [GLMusicDirectory().stringByStandardizingPath stringByAppendingString:@"/"];
     NSString *path = absolutePath.stringByStandardizingPath;
     if (![path hasPrefix:root]) return nil;
     return [path substringFromIndex:root.length];
