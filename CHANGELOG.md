@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 (2026-10-17)
+
+- Upload over Wi-Fi: More, Upload shows an address. A browser on the same
+  network drops files and folders on the page.
+- "Open in Groovelet" from other apps puts the file in Imported.
+
 ## 0.4.0 (2026-10-17)
 
 - A mini player above the tab bar shows the track, play or pause, and next.
