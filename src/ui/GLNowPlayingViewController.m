@@ -8,7 +8,7 @@
 #import "GLQueueViewController.h"
 #import "GLTheme.h"
 
-@interface GLNowPlayingViewController ()
+@interface GLNowPlayingViewController () <UIActionSheetDelegate>
 @property (nonatomic, strong) UIImageView *background;
 @property (nonatomic, strong) CALayer *art;
 @property (nonatomic, strong) UILabel *titleLabel;
@@ -22,6 +22,8 @@
 @property (nonatomic, strong) NSTimer *timer;
 @property (nonatomic, copy) NSString *artKey;
 @property (nonatomic) BOOL scrubbing;
+@property (nonatomic, strong) UIButton *timerButton;
+@property (nonatomic, strong) UILabel *headingLabel;
 @end
 
 @implementation GLNowPlayingViewController
@@ -56,9 +58,10 @@
     [self.view addSubview:self.background];
 
     [self buttonWithIcon:GLIconClose size:24 frame:CGRectMake(4, 2, 44, 44) action:@selector(close)];
-    UILabel *heading = [self labelWithFrame:CGRectMake(60, 14, 200, 18) font:GLBoldFont(12)
-                                      color:GLSecondaryTextColor()];
-    heading.text = @"NOW PLAYING";
+    self.headingLabel = [self labelWithFrame:CGRectMake(60, 14, 200, 18) font:GLBoldFont(12)
+                                       color:GLSecondaryTextColor()];
+    self.timerButton = [self buttonWithIcon:GLIconTimer size:20 frame:CGRectMake(228, 2, 44, 44)
+                                     action:@selector(chooseSleep)];
     [self buttonWithIcon:GLIconQueue size:24 frame:CGRectMake(272, 2, 44, 44) action:@selector(showQueue)];
 
     self.art = [CALayer layer];
@@ -162,6 +165,9 @@
     GLIcon repeatIcon = playback.repeat == GLRepeatOne ? GLIconRepeatOne : GLIconRepeat;
     [self.repeatButton setImage:GLIconImage(repeatIcon, 20, playback.repeat != GLRepeatOff ? GLAccentColor() : off)
                        forState:UIControlStateNormal];
+    BOOL sleeping = playback.sleepDate || playback.sleepAtEndOfTrack;
+    [self.timerButton setImage:GLIconImage(GLIconTimer, 20, sleeping ? GLAccentColor() : off)
+                      forState:UIControlStateNormal];
     if (![self.artKey isEqualToString:track.albumKey]) {
         self.artKey = track.albumKey;
         [[GLImageLoader shared] showArtOfAlbum:track.albumKey path:track.path points:240 inLayer:self.art];
@@ -177,8 +183,16 @@
 }
 
 - (void)updateTime {
-    if (self.scrubbing) return;
     GLPlayback *playback = [GLPlayback shared];
+    if (playback.sleepAtEndOfTrack) {
+        self.headingLabel.text = @"SLEEP AT THE END OF THE TRACK";
+    } else if (playback.sleepDate) {
+        long minutes = lround(ceil([playback.sleepDate timeIntervalSinceNow] / 60));
+        self.headingLabel.text = [NSString stringWithFormat:@"SLEEP IN %ld MIN", MAX(1L, minutes)];
+    } else {
+        self.headingLabel.text = @"NOW PLAYING";
+    }
+    if (self.scrubbing) return;
     double duration = playback.duration;
     self.scrubber.maximumValue = duration > 0 ? duration : 1;
     self.scrubber.value = playback.currentTime;
@@ -223,6 +237,26 @@
     GLNavigationController *navigation =
         [[GLNavigationController alloc] initWithRootViewController:[GLQueueViewController new]];
     [self presentViewController:navigation animated:YES completion:nil];
+}
+
+- (void)chooseSleep {
+    UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:@"Sleep Timer" delegate:self cancelButtonTitle:nil
+                                         destructiveButtonTitle:nil
+                                              otherButtonTitles:@"Off", @"15 Minutes", @"30 Minutes", @"45 Minutes",
+                                                                @"1 Hour", @"End of Track", nil];
+    sheet.cancelButtonIndex = [sheet addButtonWithTitle:@"Cancel"];
+    [sheet showInView:self.view];
+}
+
+- (void)actionSheet:(UIActionSheet *)sheet clickedButtonAtIndex:(NSInteger)index {
+    if (index == sheet.cancelButtonIndex || index < 0) return;
+    GLPlayback *playback = [GLPlayback shared];
+    if (index == 5) {
+        [playback sleepAtEndOfCurrentTrack];
+    } else {
+        [playback sleepAfterSeconds:[@[ @0, @15, @30, @45, @60 ][index] integerValue] * 60];
+    }
+    [self update];
 }
 
 - (void)scrubBegan {
