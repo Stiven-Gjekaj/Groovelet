@@ -140,3 +140,14 @@ GL_TEST(test_queue_keeps_shuffle_and_repeat_in_its_state) {
     GL_EQUAL(GLTitles(copy.entries), (@[ @"a", @"b", @"c" ]));
     GL_EQUAL(copy.currentEntry.track.title, @"b");
 }
+
+GL_TEST(test_queue_copy_does_not_change_with_the_queue) {
+    GLPlayQueue *queue = [GLPlayQueue new];
+    [queue setTracks:GLTracks(@[ @"a", @"b" ]) currentIndex:0];
+    GLPlayQueue *copy = [queue copy];
+    [queue append:GLTracks(@[ @"c" ])];
+    [queue moveToEntry:queue.entries[2]];
+    GL_EQUAL(GLTitles(copy.entries), (@[ @"a", @"b" ]));
+    GL_EQUAL_INT(copy.index, 0);
+    GL_EXPECT(copy.entries[1] == queue.entries[1]);
+}

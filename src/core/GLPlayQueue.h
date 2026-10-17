@@ -20,7 +20,7 @@ typedef NS_ENUM(NSInteger, GLRepeatMode) {
 + (instancetype)entryWithTrack:(GLTrack *)track;
 @end
 
-@interface GLPlayQueue : NSObject
+@interface GLPlayQueue : NSObject <NSCopying>
 
 @property (nonatomic, readonly) NSArray *entries;
 // The place of the current entry, or NSNotFound when the queue is empty.
@@ -55,6 +55,10 @@ typedef NS_ENUM(NSInteger, GLRepeatMode) {
 - (BOOL)removeEntryAtIndex:(NSUInteger)index;
 
 - (void)clear;
+
+// A copy shares the entries, not the lists. Another thread can read the
+// state of a copy while this queue changes.
+- (id)copyWithZone:(NSZone *)zone;
 
 // The queue as a property list: the paths, the order of the source, the
 // place, shuffle, and repeat. A property list of 10000 paths is fast to

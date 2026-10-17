@@ -152,13 +152,30 @@
     self.index = NSNotFound;
 }
 
+- (id)copyWithZone:(NSZone *)zone {
+    GLPlayQueue *copy = [GLPlayQueue new];
+    copy.list = [self.list mutableCopy];
+    copy.sourceOrder = [self.sourceOrder mutableCopy];
+    copy.index = self.index;
+    copy->_shuffle = self.shuffle;
+    copy->_repeat = self.repeat;
+    return copy;
+}
+
 - (NSDictionary *)state {
     NSMutableArray *paths = [NSMutableArray arrayWithCapacity:self.list.count];
-    for (GLQueueEntry *entry in self.list) [paths addObject:entry.track.path ?: @""];
+    // The place of each entry, by its pointer. A search in the list for each
+    // entry takes too long for a queue of 10000 entries.
+    NSMapTable *places = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsObjectPointerPersonality
+                                               valueOptions:NSPointerFunctionsStrongMemory];
+    [self.list enumerateObjectsUsingBlock:^(GLQueueEntry *entry, NSUInteger i, BOOL *stop) {
+        [paths addObject:entry.track.path ?: @""];
+        [places setObject:@(i) forKey:entry];
+    }];
     NSMutableArray *source = [NSMutableArray arrayWithCapacity:self.sourceOrder.count];
     for (GLQueueEntry *entry in self.sourceOrder) {
-        NSUInteger place = [self.list indexOfObjectIdenticalTo:entry];
-        if (place != NSNotFound) [source addObject:@(place)];
+        NSNumber *place = [places objectForKey:entry];
+        if (place) [source addObject:place];
     }
     return @{
         @"paths": paths, @"source": source, @"index": @(self.index == NSNotFound ? -1 : (NSInteger)self.index),
