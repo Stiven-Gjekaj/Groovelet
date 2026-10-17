@@ -20,7 +20,7 @@ if [ "$1" = "--phone" ]; then
     # shellcheck disable=SC2086
     "$ROOT/build.sh" "$OUT/gltests-armv7" -I"$ROOT/src/core" -I"$ROOT/src/audio" -I"$ROOT/tests" \
         $CORE $AUDIO $CORE_TESTS $AUDIO_TESTS -lsqlite3 \
-        -framework Foundation -framework AudioToolbox -framework CoreGraphics -framework ImageIO >"$OUT/build.log" 2>&1 ||
+        -framework Foundation -framework AudioToolbox -framework AVFoundation -framework CoreGraphics -framework ImageIO >"$OUT/build.log" 2>&1 ||
         { grep -v 'liblaunch.dylib' "$OUT/build.log" >&2; exit 1; }
     ssh iphone4s 'mkdir -p /tmp/gltests'
     scp -q "$OUT/gltests-armv7" iphone4s:/tmp/gltests/gltests
