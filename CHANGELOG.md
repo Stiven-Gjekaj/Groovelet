@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.2 (2026-10-18)
+
+- The length of an MP3 file comes from its Xing, Info, or VBRI header. iOS
+  showed some low-bitrate files at 57% of their real length.
+- Scan the library again, in Settings, reads each file again, so that the
+  library gets the right lengths.
+
 ## 1.0.1 (2026-10-17)
 
 - A song with an accent in its file name now shows in an M3U playlist.
